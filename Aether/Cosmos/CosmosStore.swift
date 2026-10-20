@@ -22,6 +22,9 @@ final class CosmosStore {
     var searchText = "" { didSet { refreshVisible() } }
     var sortOrder = [KeyPathComparator(\LibraryItem.displayArtist)] { didSet { refreshVisible() } }
     var selection: Set<String> = []
+    var quickLookURL: URL?
+    var renamePlan: [FileMove]?
+    var verifying: Set<String> = []
 
     @ObservationIgnored var onLookupChanged: ((MasterLookup) -> Void)?
     @ObservationIgnored var onRelocated: (([FileMove]) -> Void)?

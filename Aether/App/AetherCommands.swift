@@ -1,3 +1,5 @@
+import AppKit
+import Cosmos
 import SwiftUI
 
 struct AetherCommands: Commands {
@@ -24,6 +26,26 @@ struct AetherCommands: Commands {
                 .disabled(model.harvester.failedCount == 0)
             Divider()
             Button("Limpiar terminadas") { model.harvester.clearFinished() }
+        }
+        CommandMenu("Cosmos") {
+            Button("Mostrar en Finder") {
+                NSWorkspace.shared.activateFileViewerSelecting(model.cosmos.selectedItems.map(model.cosmos.url(for:)))
+            }
+            .keyboardShortcut("r", modifiers: [.command, .shift])
+            .disabled(model.cosmos.selection.isEmpty)
+            Button("Quick Look") { model.cosmos.quickLookURL = model.cosmos.selectedItems.first.map(model.cosmos.url(for:)) }
+                .keyboardShortcut("y")
+                .disabled(model.cosmos.selection.isEmpty)
+            Button("Renombrar desde tags…") {
+                Task { model.cosmos.renamePlan = await model.cosmos.plannedRenames(for: model.cosmos.selectedItems) }
+            }
+            .keyboardShortcut("n", modifiers: [.command, .shift])
+            .disabled(model.cosmos.selection.isEmpty)
+            Button("Verificar integridad") { Task { _ = await model.cosmos.verify(model.cosmos.selectedItems) } }
+                .keyboardShortcut("v", modifiers: [.command, .option])
+                .disabled(model.cosmos.selection.isEmpty)
+            Divider()
+            Button("Re-escanear Master") { Task { await model.cosmos.rescan() } }
         }
     }
 }

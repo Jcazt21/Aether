@@ -5,6 +5,7 @@ struct SidebarView: View {
     @Environment(HarvesterStore.self) private var harvester
     @Environment(CosmosStore.self) private var cosmos
     @Environment(Preferences.self) private var preferences
+    @Environment(\.undoManager) private var undoManager
 
     var body: some View {
         List(selection: Binding<Route?>(get: { route }, set: { if let new = $0 { route = new } })) {
@@ -18,9 +19,17 @@ struct SidebarView: View {
                 Label("Master", systemImage: "folder").tag(Route.cosmosAll)
                 Label("Por clasificar", systemImage: "tray").tag(Route.cosmosInbox)
                     .badge(cosmos.inboxCount)
+                    .dropDestination(for: URL.self) { urls, _ in
+                        Task { await cosmos.moveURLs(urls, toFolder: preferences.inboxFolderName, undoManager: undoManager) }
+                        return true
+                    }
                 ForEach(cosmos.folders.filter { $0.name != preferences.inboxFolderName }) { folder in
                     Label(folder.name, systemImage: "folder")
                         .tag(Route.cosmosFolder(folder.name))
+                        .dropDestination(for: URL.self) { urls, _ in
+                            Task { await cosmos.moveURLs(urls, toFolder: folder.name, undoManager: undoManager) }
+                            return true
+                        }
                 }
             }
             Section("Revisar") {
