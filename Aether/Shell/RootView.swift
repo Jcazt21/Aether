@@ -23,8 +23,7 @@ struct DetailRouter: View {
     var body: some View {
         switch route {
         case .harvesterSearch:
-            ContentUnavailableView("Buscar en Tidal", systemImage: "magnifyingglass",
-                                   description: Text("Escribe un artista, una pista o un álbum."))
+            HarvesterSearchView()
         case .harvesterQueue:
             ContentUnavailableView("Cola vacía", systemImage: "arrow.down.circle",
                                    description: Text("Las descargas aparecerán aquí."))

@@ -15,5 +15,15 @@ struct AetherCommands: Commands {
             Button("Master") { model.route = .cosmosAll }
                 .keyboardShortcut("3")
         }
+        CommandMenu("Harvester") {
+            Button("Descargar selección") { model.harvester.enqueueSelection() }
+                .keyboardShortcut("d")
+                .disabled(model.harvester.selectedTrackIDs.isEmpty)
+            Button("Reintentar fallidas") { model.harvester.retryFailed() }
+                .keyboardShortcut("r", modifiers: [.command, .shift])
+                .disabled(model.harvester.failedCount == 0)
+            Divider()
+            Button("Limpiar terminadas") { model.harvester.clearFinished() }
+        }
     }
 }
