@@ -56,4 +56,33 @@ public enum AudioFixture {
         }
         return (url, pcm)
     }
+
+    /// Writes big/little-endian PCM in a WAV or AIFF container with AudioToolbox.
+    public static func makePCMFile(type: AudioFileTypeID, ext: String, seconds: Double = 1, bits: Int = 16) throws -> URL {
+        let url = FileManager.default.temporaryDirectory.appending(path: "pcm-\(UUID().uuidString).\(ext)")
+        let rate = 44_100.0
+        let bytes = bits / 8
+        let bigEndian = type == kAudioFileAIFFType
+        var format = AudioStreamBasicDescription(
+            mSampleRate: rate, mFormatID: kAudioFormatLinearPCM,
+            mFormatFlags: kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked | (bigEndian ? kAudioFormatFlagIsBigEndian : 0),
+            mBytesPerPacket: UInt32(bytes * 2), mFramesPerPacket: 1, mBytesPerFrame: UInt32(bytes * 2),
+            mChannelsPerFrame: 2, mBitsPerChannel: UInt32(bits), mReserved: 0)
+        var ref: ExtAudioFileRef?
+        try check(ExtAudioFileCreateWithURL(url as CFURL, type, &format, nil, AudioFileFlags.eraseFile.rawValue, &ref))
+        guard let file = ref else { throw Failure(status: -1) }
+        defer { ExtAudioFileDispose(file) }
+        let frames = Int(seconds * rate)
+        var pcm = [UInt8](repeating: 0, count: frames * bytes * 2)
+        var client = format
+        client.mFormatFlags &= ~kAudioFormatFlagIsBigEndian
+        try check(ExtAudioFileSetProperty(file, kExtAudioFileProperty_ClientDataFormat,
+                                          UInt32(MemoryLayout<AudioStreamBasicDescription>.size), &client))
+        try pcm.withUnsafeMutableBytes { raw in
+            var list = AudioBufferList(mNumberBuffers: 1, mBuffers: AudioBuffer(
+                mNumberChannels: 2, mDataByteSize: UInt32(raw.count), mData: raw.baseAddress))
+            try check(ExtAudioFileWrite(file, UInt32(frames), &list))
+        }
+        return url
+    }
 }
