@@ -13,6 +13,8 @@ struct RootView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Tokens.canvas)
         }
+        .onChange(of: model.preferences.hifiBaseURL) { model.harvester.applyPreferences() }
+        .onChange(of: model.preferences.maxConcurrentDownloads) { model.harvester.applyPreferences() }
     }
 }
 
@@ -25,11 +27,9 @@ struct DetailRouter: View {
         case .harvesterSearch:
             HarvesterSearchView()
         case .harvesterQueue:
-            ContentUnavailableView("Cola vacía", systemImage: "arrow.down.circle",
-                                   description: Text("Las descargas aparecerán aquí."))
+            HarvesterQueueView()
         case .harvesterHistory:
-            ContentUnavailableView("Sin historial", systemImage: "clock",
-                                   description: Text("Las descargas verificadas aparecerán aquí."))
+            HarvesterHistoryView()
         case .cosmosAll, .cosmosFolder, .cosmosInbox, .cosmosReview:
             ContentUnavailableView("Master", systemImage: "folder",
                                    description: Text("Cosmos indexará tu carpeta Master."))

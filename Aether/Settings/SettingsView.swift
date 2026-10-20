@@ -1,3 +1,6 @@
+import AppKit
+import Harvester
+import HiFiClient
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -5,6 +8,7 @@ struct SettingsView: View {
     var body: some View {
         TabView {
             Tab("General", systemImage: "gearshape") { GeneralSettings() }
+            Tab("Harvester", systemImage: "arrow.down.circle") { HarvesterSettings() }
         }
         .frame(width: 520)
         .scenePadding()
@@ -40,5 +44,50 @@ private struct GeneralSettings: View {
         .fileImporter(isPresented: $isPickingMaster, allowedContentTypes: [.folder]) { result in
             if case .success(let url) = result { preferences.masterFolder = url }
         }
+    }
+}
+
+private struct HarvesterSettings: View {
+    @Environment(Preferences.self) private var preferences
+    @State private var connection: Bool?
+
+    var body: some View {
+        @Bindable var preferences = preferences
+        Form {
+            Section {
+                Picker("Calidad", selection: $preferences.qualityPolicyRaw) {
+                    ForEach(QualityPolicy.allCases, id: \.rawValue) { Text($0.title).tag($0.rawValue) }
+                }
+                Stepper("Descargas simultáneas: \(preferences.maxConcurrentDownloads)",
+                        value: $preferences.maxConcurrentDownloads, in: 1...4)
+            } header: { SectionLabel("Descarga") }
+            Section {
+                Toggle("Mantener rekordbox.xml", isOn: $preferences.rekordboxXMLEnabled)
+                LabeledContent("Archivo") {
+                    HStack {
+                        Readout(preferences.rekordboxXMLURL.path(percentEncoded: false))
+                        Button("Mostrar") { NSWorkspace.shared.activateFileViewerSelecting([preferences.rekordboxXMLURL]) }
+                    }
+                }
+                Text("En rekordbox: Preferencias › Avanzado › Base de datos › rekordbox xml → elige este archivo.")
+                    .font(.callout).foregroundStyle(.secondary)
+            } header: { SectionLabel("rekordbox") }
+            Section {
+                LabeledContent("hifi-api") {
+                    HStack {
+                        Readout(preferences.hifiBaseURL.absoluteString)
+                        Button("Probar") {
+                            Task { connection = await HiFiClient(baseURL: preferences.hifiBaseURL).ping() }
+                        }
+                        if let connection {
+                            Image(systemName: connection ? "checkmark.circle.fill" : "xmark.octagon.fill")
+                                .foregroundStyle(connection ? Tokens.signal : Tokens.fault)
+                                .accessibilityLabel(connection ? "Conectado" : "Sin conexión")
+                        }
+                    }
+                }
+            } header: { SectionLabel("Conexión") }
+        }
+        .formStyle(.grouped)
     }
 }

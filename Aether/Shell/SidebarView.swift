@@ -2,12 +2,14 @@ import SwiftUI
 
 struct SidebarView: View {
     @Binding var route: Route
+    @Environment(HarvesterStore.self) private var harvester
 
     var body: some View {
         List(selection: Binding<Route?>(get: { route }, set: { if let new = $0 { route = new } })) {
             Section("Harvester") {
                 Label("Buscar", systemImage: "magnifyingglass").tag(Route.harvesterSearch)
                 Label("Cola", systemImage: "arrow.down.circle").tag(Route.harvesterQueue)
+                    .badge(harvester.activeCount)
                 Label("Historial", systemImage: "clock").tag(Route.harvesterHistory)
             }
             Section("Cosmos") {

@@ -1,0 +1,33 @@
+import AppKit
+import FlacKit
+import Harvester
+import SwiftUI
+
+struct HarvesterHistoryView: View {
+    @Environment(HarvesterStore.self) private var store
+    @State private var selection: Set<HistoryEntry.ID> = []
+
+    var body: some View {
+        Table(store.history, selection: $selection) {
+            TableColumn("Título") { Text($0.title).lineLimit(1) }.width(min: 180, ideal: 280)
+            TableColumn("Artista") { Text($0.artist).lineLimit(1) }.width(min: 120, ideal: 180)
+            TableColumn("Formato") { Readout($0.format.label) }.width(96)
+            TableColumn("MD5") { Readout($0.report.shortMD5, tone: .signal) }.width(90)
+            TableColumn("Carpeta") { Text($0.fileURL.deletingLastPathComponent().lastPathComponent).foregroundStyle(.secondary) }
+                .width(min: 90, ideal: 120)
+            TableColumn("Fecha") { Readout($0.finishedAt.formatted(date: .abbreviated, time: .shortened)) }.width(130)
+        }
+        .contextMenu(forSelectionType: HistoryEntry.ID.self) { ids in
+            Button("Mostrar en Finder") {
+                NSWorkspace.shared.activateFileViewerSelecting(store.history.filter { ids.contains($0.id) }.map(\.fileURL))
+            }
+        }
+        .navigationTitle("Historial")
+        .overlay {
+            if store.history.isEmpty {
+                ContentUnavailableView("Sin historial", systemImage: "clock",
+                                       description: Text("Las descargas verificadas aparecerán aquí."))
+            }
+        }
+    }
+}
