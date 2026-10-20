@@ -13,6 +13,7 @@ struct AetherApp: App {
                 .environment(model)
                 .environment(model.preferences)
                 .environment(model.harvester)
+                .environment(model.cosmos)
                 .preferredColorScheme(.dark)
                 .frame(minWidth: 960, minHeight: 600)
         }

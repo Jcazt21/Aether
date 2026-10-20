@@ -15,6 +15,12 @@ struct RootView: View {
         }
         .onChange(of: model.preferences.hifiBaseURL) { model.harvester.applyPreferences() }
         .onChange(of: model.preferences.maxConcurrentDownloads) { model.harvester.applyPreferences() }
+        .onChange(of: model.route, initial: true) { _, route in
+            switch route {
+            case .cosmosAll, .cosmosFolder, .cosmosInbox, .cosmosReview: model.cosmos.scope = route
+            default: break
+            }
+        }
     }
 }
 
@@ -31,8 +37,7 @@ struct DetailRouter: View {
         case .harvesterHistory:
             HarvesterHistoryView()
         case .cosmosAll, .cosmosFolder, .cosmosInbox, .cosmosReview:
-            ContentUnavailableView("Master", systemImage: "folder",
-                                   description: Text("Cosmos indexará tu carpeta Master."))
+            CosmosBrowserView()
         }
     }
 }

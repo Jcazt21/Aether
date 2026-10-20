@@ -5,13 +5,16 @@ import Observation
 final class AppModel {
     let preferences: Preferences
     let harvester: HarvesterStore
+    let cosmos: CosmosStore
     var route: Route = .harvesterSearch
     var isInspectorPresented = false
 
     init(preferences: Preferences = Preferences()) {
         self.preferences = preferences
         harvester = HarvesterStore(preferences: preferences)
-        // Owned by the model, not a view: downloads keep reporting with the window closed.
+        cosmos = CosmosStore(preferences: preferences)
+        // Owned by the model, not a view: downloads and the folder watcher keep running with the window closed.
         Task { [harvester] in await harvester.start() }
+        Task { [cosmos] in await cosmos.start() }
     }
 }
