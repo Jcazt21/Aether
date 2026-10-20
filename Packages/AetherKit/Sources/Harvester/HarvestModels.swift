@@ -61,6 +61,14 @@ public struct HarvestResult: Codable, Sendable, Equatable {
     public var format: FormatSummary
     public var bytes: Int64
     public var finishedAt: Date
+
+    public init(fileURL: URL, report: IntegrityReport, format: FormatSummary, bytes: Int64, finishedAt: Date) {
+        self.fileURL = fileURL
+        self.report = report
+        self.format = format
+        self.bytes = bytes
+        self.finishedAt = finishedAt
+    }
 }
 
 public enum HarvestPhase: Sendable, Equatable {

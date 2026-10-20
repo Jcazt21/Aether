@@ -12,6 +12,7 @@ struct AetherApp: App {
             RootView()
                 .environment(model)
                 .environment(model.preferences)
+                .environment(model.harvester)
                 .preferredColorScheme(.dark)
                 .frame(minWidth: 960, minHeight: 600)
         }
