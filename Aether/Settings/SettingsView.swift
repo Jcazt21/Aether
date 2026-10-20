@@ -9,6 +9,7 @@ struct SettingsView: View {
         TabView {
             Tab("General", systemImage: "gearshape") { GeneralSettings() }
             Tab("Harvester", systemImage: "arrow.down.circle") { HarvesterSettings() }
+            Tab("Aether Core", systemImage: "waveform") { CoreSettings() }
         }
         .frame(width: 520)
         .scenePadding()
@@ -87,6 +88,22 @@ private struct HarvesterSettings: View {
                     }
                 }
             } header: { SectionLabel("Conexión") }
+        }
+        .formStyle(.grouped)
+    }
+}
+
+private struct CoreSettings: View {
+    @Environment(Preferences.self) private var preferences
+
+    var body: some View {
+        @Bindable var preferences = preferences
+        Form {
+            Section {
+                Toggle("Bit-perfect: ajustar el sample rate del DAC a cada pista", isOn: $preferences.bitPerfect)
+                Text("Aether devuelve el sample rate original al salir. El volumen se controla en el sistema o en el DAC.")
+                    .font(.callout).foregroundStyle(.secondary)
+            } header: { SectionLabel("Salida") }
         }
         .formStyle(.grouped)
     }

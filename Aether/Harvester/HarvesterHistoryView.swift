@@ -5,6 +5,7 @@ import SwiftUI
 
 struct HarvesterHistoryView: View {
     @Environment(HarvesterStore.self) private var store
+    @Environment(PlayerModel.self) private var player
     @State private var selection: Set<HistoryEntry.ID> = []
 
     var body: some View {
@@ -18,8 +19,13 @@ struct HarvesterHistoryView: View {
             TableColumn("Fecha") { Readout($0.finishedAt.formatted(date: .abbreviated, time: .shortened)) }.width(130)
         }
         .contextMenu(forSelectionType: HistoryEntry.ID.self) { ids in
+            let entries = store.history.filter { ids.contains($0.id) }
+            Button("Reproducir") {
+                player.play(urls: entries.map(\.fileURL), startAt: 0)
+            }
+            .disabled(entries.isEmpty)
             Button("Mostrar en Finder") {
-                NSWorkspace.shared.activateFileViewerSelecting(store.history.filter { ids.contains($0.id) }.map(\.fileURL))
+                NSWorkspace.shared.activateFileViewerSelecting(entries.map(\.fileURL))
             }
         }
         .navigationTitle("Historial")

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RootView: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         @Bindable var model = model
@@ -15,6 +16,16 @@ struct RootView: View {
         }
         .inspector(isPresented: $model.isInspectorPresented) {
             TagInspectorView()
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            TransportBar()
+                .transition(reduceMotion ? .opacity : .opacity.combined(with: .offset(y: 8)))
+        }
+        .animation(reduceMotion ? .easeOut(duration: 0.15) : Tokens.Motion.enter, value: model.player.current?.url)
+        .onKeyPress(.space) {
+            // Text fields consume space first, so this only fires from tables/lists/background.
+            model.player.toggle()
+            return .handled
         }
         .onChange(of: model.preferences.hifiBaseURL) { model.harvester.applyPreferences() }
         .onChange(of: model.preferences.maxConcurrentDownloads) { model.harvester.applyPreferences() }

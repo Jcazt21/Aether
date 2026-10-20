@@ -1,3 +1,4 @@
+import AetherCore
 import AppKit
 import Cosmos
 import SwiftUI
@@ -46,6 +47,19 @@ struct AetherCommands: Commands {
                 .disabled(model.cosmos.selection.isEmpty)
             Divider()
             Button("Re-escanear Master") { Task { await model.cosmos.rescan() } }
+        }
+        CommandMenu("Control") {
+            Button(model.player.state == .playing ? "Pausa" : "Reproducir") { model.player.toggle() }
+                .disabled(model.player.current == nil && model.player.queue.current == nil)
+            Button("Siguiente") { model.player.next() }
+                .keyboardShortcut(.rightArrow, modifiers: .command)
+            Button("Anterior") { model.player.previous() }
+                .keyboardShortcut(.leftArrow, modifiers: .command)
+            Divider()
+            Button("Avanzar 10 s") { model.player.skip(by: 10) }
+                .keyboardShortcut(.rightArrow, modifiers: [.command, .option])
+            Button("Retroceder 10 s") { model.player.skip(by: -10) }
+                .keyboardShortcut(.leftArrow, modifiers: [.command, .option])
         }
     }
 }

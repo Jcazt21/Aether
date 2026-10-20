@@ -6,6 +6,7 @@ import TagKit
 
 struct CosmosBrowserView: View {
     @Environment(CosmosStore.self) private var store
+    @Environment(PlayerModel.self) private var player
     @Environment(\.undoManager) private var undoManager
 
     var body: some View {
@@ -53,8 +54,9 @@ struct CosmosBrowserView: View {
             Divider()
             Button("Mover a la Papelera", role: .destructive) { Task { await store.trash(items, undoManager: undoManager) } }
         } primaryAction: { ids in
-            // Double-click: reveal for now; plan 06 turns this into "play in Aether Core".
-            NSWorkspace.shared.activateFileViewerSelecting(store.visible.filter { ids.contains($0.id) }.map(store.url(for:)))
+            let urls = store.visible.map(store.url(for:))
+            guard let first = store.visible.firstIndex(where: { ids.contains($0.id) }) else { return }
+            player.play(urls: urls, startAt: first)
         }
         .quickLookPreview($store.quickLookURL, in: store.visible.map(store.url(for:)))
         .sheet(item: Binding(get: { store.renamePlan.map(IdentifiedPlan.init) }, set: { store.renamePlan = $0?.moves })) {
