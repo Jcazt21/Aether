@@ -1,6 +1,9 @@
 @preconcurrency import AVFAudio
+import FlacKit
 public import Foundation
+public import HiFiClient
 import OSLog
+import Synchronization
 
 public struct LoadedTrack: Equatable, Sendable {
     public let url: URL
@@ -36,6 +39,7 @@ public final class PlaybackEngine {
     private var originalDeviceRate: Double?
     private var isMetering = false
     private var configObserver: (any NSObjectProtocol)?
+    private var streamTask: Task<Void, Never>?
 
     public init() {
         engine.attach(player)
@@ -99,10 +103,45 @@ public final class PlaybackEngine {
 
     public func stop() {
         generation += 1
+        streamTask?.cancel()
         player.stop()
         isScheduled = false
         startFrame = 0
         if state != .idle { state = file == nil ? .idle : .paused }
+    }
+
+    /// Streams DASH: fetch → decode → schedule, keeping ≤ 3 segments queued in the player node.
+    public func loadStream(manifest: DashManifest, initSegment: [UInt8], bitDepth: Int?,
+                           fetch: @escaping @Sendable (URL) async throws -> [UInt8]) async throws -> LoadedTrack {
+        stop()
+        streamTask?.cancel()
+        file = nil
+        let config = try FMP4Flac.parseInit(initSegment)
+        let decoder = try FlacPacketDecoder(config: config, cookie: try StreamCookie.make(from: initSegment), maxPacketSize: 1 << 20)
+        let format = decoder.outputFormat
+        engine.stop()
+        engine.disconnectNodeOutput(player)
+        engine.connect(player, to: engine.mainMixerNode, format: format)
+        engine.prepare()
+        try engine.start()
+        let loaded = LoadedTrack(url: manifest.initializationURL, sampleRate: format.sampleRate,
+                                 channels: Int(format.channelCount), bitDepth: bitDepth, frames: Int64(manifest.totalSamples))
+        track = loaded
+        generation += 1
+        let token = generation
+        let inFlight = InFlightCounter()
+        streamTask = Task { [weak self] in
+            for number in manifest.segmentNumbers {
+                while inFlight.value >= 3 { try? await Task.sleep(for: .milliseconds(100)) }
+                guard !Task.isCancelled, let bytes = try? await fetch(manifest.mediaURL(number: number)),
+                      let pcm = try? decoder.decode(segment: bytes), let self, self.generation == token else { return }
+                inFlight.increment()
+                self.player.scheduleBuffer(pcm, completionCallbackType: .dataPlayedBack) { _ in inFlight.decrement() }
+            }
+        }
+        player.play()
+        state = .playing
+        return loaded
     }
 
     public func seek(to seconds: Double) {
@@ -185,4 +224,11 @@ public final class PlaybackEngine {
             startFrame = AVAudioFramePosition(resumeAt * file.processingFormat.sampleRate)
         }
     }
+}
+
+private final class InFlightCounter: Sendable {
+    private let value_ = Mutex(0)
+    var value: Int { value_.withLock { $0 } }
+    func increment() { value_.withLock { $0 += 1 } }
+    func decrement() { value_.withLock { $0 -= 1 } }
 }

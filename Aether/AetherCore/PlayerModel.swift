@@ -85,8 +85,21 @@ final class PlayerModel {
         isPreparingPreview = true
         Task {
             defer { isPreparingPreview = false }
-            guard let url = try? await previewCache.file(for: track, client: client), previewingTrackID == track.id else { return }
-            play(urls: [url], startAt: 0)
+            let session = URLSession(configuration: .ephemeral)
+            do {
+                let info = try await client.playbackInfo(trackID: track.id, quality: .lossless)
+                let manifest = try info.dashManifest()
+                let (initData, _) = try await session.data(from: manifest.initializationURL)
+                _ = try await engine.loadStream(manifest: manifest, initSegment: [UInt8](initData), bitDepth: info.bitDepth) { url in
+                    [UInt8](try await session.data(from: url).0)
+                }
+                current = NowPlaying(url: manifest.initializationURL, title: track.displayTitle, artist: track.allArtistNames,
+                                     album: track.album?.title, formatLabel: "TIDAL · \(info.bitDepth ?? 16)/44.1 · STREAM", artwork: nil)
+                waveform = []
+            } catch {
+                guard let url = try? await previewCache.file(for: track, client: client), previewingTrackID == track.id else { return }
+                play(urls: [url], startAt: 0)
+            }
         }
     }
 
