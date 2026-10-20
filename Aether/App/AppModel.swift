@@ -6,6 +6,7 @@ final class AppModel {
     let preferences: Preferences
     let harvester: HarvesterStore
     let cosmos: CosmosStore
+    let player: PlayerModel
     var route: Route = .harvesterSearch
     var isInspectorPresented = false
 
@@ -13,6 +14,7 @@ final class AppModel {
         self.preferences = preferences
         harvester = HarvesterStore(preferences: preferences)
         cosmos = CosmosStore(preferences: preferences)
+        player = PlayerModel(preferences: preferences)
         // Owned by the model, not a view: downloads and the folder watcher keep running with the window closed.
         Task { [harvester] in await harvester.start() }
         Task { [cosmos] in await cosmos.start() }

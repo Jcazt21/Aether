@@ -14,8 +14,10 @@ struct AetherApp: App {
                 .environment(model.preferences)
                 .environment(model.harvester)
                 .environment(model.cosmos)
+                .environment(model.player)
                 .preferredColorScheme(.dark)
                 .frame(minWidth: 960, minHeight: 600)
+                .onAppear { appDelegate.onTerminate = { [player = model.player] in player.shutdown() } }
         }
         .defaultSize(width: 1280, height: 800)
         .windowToolbarStyle(.unified)
