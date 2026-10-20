@@ -1,4 +1,5 @@
 import AppKit
+import Cosmos
 import HiFiClient
 import SwiftUI
 
@@ -9,6 +10,21 @@ struct TrackTable: View {
 
     var body: some View {
         Table(tracks, selection: $selection) {
+            TableColumn("") { track in
+                switch store.masterMatch(for: track) {
+                case .exact(let item):
+                    Image(systemName: "checkmark.circle.fill").foregroundStyle(Tokens.signal)
+                        .help("Ya en Master: \(item.relativePath)")
+                        .accessibilityLabel("Ya en Master")
+                case .similar(let item):
+                    Image(systemName: "circle.lefthalf.filled").foregroundStyle(.secondary)
+                        .help("Parecida en Master: \(item.relativePath)")
+                        .accessibilityLabel("Versión parecida en Master")
+                case nil:
+                    EmptyView()
+                }
+            }
+            .width(20)
             TableColumn("Título") { track in
                 VStack(alignment: .leading, spacing: 1) {
                     Text(track.title).lineLimit(1)
@@ -31,7 +47,7 @@ struct TrackTable: View {
         }
         .contextMenu(forSelectionType: Int.self) { ids in
             Button("Descargar \(ids.count == 1 ? "pista" : "\(ids.count) pistas")") {
-                store.enqueue(tracks.filter { ids.contains($0.id) })
+                store.requestEnqueue(tracks.filter { ids.contains($0.id) })
             }
             .disabled(ids.isEmpty)
             Divider()
@@ -41,7 +57,7 @@ struct TrackTable: View {
                 NSPasteboard.general.setString(links.joined(separator: "\n"), forType: .string)
             }
         } primaryAction: { ids in
-            store.enqueue(tracks.filter { ids.contains($0.id) })
+            store.requestEnqueue(tracks.filter { ids.contains($0.id) })
         }
     }
 }

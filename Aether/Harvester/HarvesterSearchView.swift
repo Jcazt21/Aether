@@ -10,6 +10,17 @@ struct HarvesterSearchView: View {
             content
                 .navigationDestination(for: TidalAlbum.self) { AlbumTracksView(album: $0) }
         }
+        .confirmationDialog(
+            "\(store.pendingDuplicates?.count ?? 0) ya están en Master",
+            isPresented: Binding(get: { store.pendingDuplicates != nil }, set: { if !$0 { store.resolvePendingDuplicates(includeDuplicates: false) } }),
+            titleVisibility: .visible
+        ) {
+            Button("Omitirlas") { store.resolvePendingDuplicates(includeDuplicates: false) }
+                .keyboardShortcut(.defaultAction)
+            Button("Descargar de todos modos") { store.resolvePendingDuplicates(includeDuplicates: true) }
+        } message: {
+            Text("Coinciden por ISRC o por artista y título.")
+        }
         .searchable(text: $store.searchQuery, placement: .toolbar, prompt: "Buscar en Tidal")
         .task(id: "\(store.searchScope.rawValue)|\(store.searchQuery)") {
             guard (try? await Task.sleep(for: .milliseconds(300))) != nil else { return }

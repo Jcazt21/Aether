@@ -1,4 +1,5 @@
 import AppKit
+import Cosmos
 import Foundation
 import Harvester
 import HiFiClient
@@ -24,6 +25,8 @@ final class HarvesterStore {
     var selectedTrackIDs: Set<Int> = []
     var destination: URL
     private(set) var destinationFolders: [URL] = []
+    var masterLookup: MasterLookup = .empty
+    var pendingDuplicates: [TidalTrack]?
 
     var activeCount: Int { jobs.count { !$0.phase.isTerminal } }
     var failedCount: Int { jobs.count { if case .failed = $0.phase { true } else { false } } }
@@ -99,6 +102,36 @@ final class HarvesterStore {
 
     // MARK: Queue
 
+    func masterMatch(for track: TidalTrack) -> MasterLookup.Match? {
+        masterLookup.match(isrc: track.isrc, artist: track.allArtistNames, title: track.displayTitle)
+    }
+
+    /// Fresh tracks start immediately; exact matches wait for an explicit decision (no silent re-downloads).
+    func requestEnqueue(_ tracks: [TidalTrack]) {
+        var fresh: [TidalTrack] = []
+        var duplicates: [TidalTrack] = []
+        for track in tracks {
+            if case .exact = masterMatch(for: track) { duplicates.append(track) } else { fresh.append(track) }
+        }
+        if !fresh.isEmpty { enqueue(fresh) }
+        pendingDuplicates = duplicates.isEmpty ? nil : duplicates
+    }
+
+    func resolvePendingDuplicates(includeDuplicates: Bool) {
+        if includeDuplicates, let pending = pendingDuplicates { enqueue(pending) }
+        pendingDuplicates = nil
+    }
+
+    func relocate(_ moves: [FileMove]) async {
+        for move in moves { await historyStore.relocate(from: move.from, to: move.to) }
+        history = await historyStore.all()
+        if preferences.rekordboxXMLEnabled {
+            let entries = history
+            let url = preferences.rekordboxXMLURL
+            await Task.detached(priority: .utility) { try? RekordboxXML.write(entries: entries, to: url) }.value
+        }
+    }
+
     func enqueue(_ tracks: [TidalTrack]) {
         let genre = destination.standardizedFileURL == preferences.inboxFolder.standardizedFileURL ? nil : destination.lastPathComponent
         let policy = QualityPolicy(rawValue: preferences.qualityPolicyRaw) ?? .hiResCapped96
@@ -109,7 +142,7 @@ final class HarvesterStore {
     }
 
     func enqueueSelection() {
-        enqueue(trackResults.filter { selectedTrackIDs.contains($0.id) })
+        requestEnqueue(trackResults.filter { selectedTrackIDs.contains($0.id) })
     }
 
     func cancel(_ id: UUID) { Task { await engine.cancel(id) } }

@@ -16,5 +16,7 @@ final class AppModel {
         // Owned by the model, not a view: downloads and the folder watcher keep running with the window closed.
         Task { [harvester] in await harvester.start() }
         Task { [cosmos] in await cosmos.start() }
+        cosmos.onLookupChanged = { [harvester] lookup in harvester.masterLookup = lookup }
+        cosmos.onRelocated = { [harvester] moves in Task { await harvester.relocate(moves) } }
     }
 }

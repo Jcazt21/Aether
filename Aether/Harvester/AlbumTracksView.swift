@@ -15,7 +15,7 @@ struct AlbumTracksView: View {
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
-                        store.enqueue(selection.isEmpty ? tracks : tracks.filter { selection.contains($0.id) })
+                        store.requestEnqueue(selection.isEmpty ? tracks : tracks.filter { selection.contains($0.id) })
                     } label: {
                         Label(selection.isEmpty ? "Descargar álbum" : "Descargar selección", systemImage: "arrow.down.circle")
                     }
