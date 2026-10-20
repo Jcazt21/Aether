@@ -5,6 +5,7 @@
 //  Created by Jean Azar on 20/10/26.
 //
 
+import ByteKit
 import SwiftUI
 
 @main

@@ -6,6 +6,10 @@
 	objectVersion = 110;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		7C4AA2423087A95400F36919 /* AetherKit in Frameworks */ = {isa = PBXBuildFile; productRef = 7C4AA2413087A95400F36919 /* AetherKit */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		7C4AA2233087A95400F36919 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -51,6 +55,7 @@
 		7C4AA2123087A95300F36919 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
+				7C4AA2423087A95400F36919 /* AetherKit in Frameworks */,
 			);
 		};
 		7C4AA21F3087A95400F36919 /* Frameworks */ = {
@@ -103,6 +108,9 @@
 				7C4AA2173087A95300F36919 /* Aether */,
 			);
 			name = Aether;
+			packageProductDependencies = (
+				7C4AA2413087A95400F36919 /* AetherKit */,
+			);
 			productName = Aether;
 			productReference = 7C4AA2153087A95300F36919 /* Aether.app */;
 			productType = "com.apple.product-type.application";
@@ -181,6 +189,9 @@
 			);
 			mainGroup = 7C4AA20C3087A95300F36919;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				7C4AA2403087A95400F36919 /* XCLocalSwiftPackageReference "Packages/AetherKit" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7C4AA2163087A95300F36919 /* Products */;
 			projectDirPath = "";
@@ -369,7 +380,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				ENABLE_APP_SANDBOX = YES;
+				ENABLE_APP_SANDBOX = NO;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -379,6 +390,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
+				INFOPLIST_FILE = Config/Aether-Info.plist;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jazar.Aether;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -387,7 +399,7 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 			};
 			name = Debug;
 		};
@@ -399,7 +411,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				ENABLE_APP_SANDBOX = YES;
+				ENABLE_APP_SANDBOX = NO;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -409,6 +421,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
+				INFOPLIST_FILE = Config/Aether-Info.plist;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jazar.Aether;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -417,7 +430,7 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 			};
 			name = Release;
 		};
@@ -436,7 +449,7 @@
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Aether.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Aether";
 			};
 			name = Debug;
@@ -456,7 +469,7 @@
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Aether.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Aether";
 			};
 			name = Release;
@@ -474,7 +487,7 @@
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TEST_TARGET_NAME = Aether;
 			};
 			name = Debug;
@@ -492,7 +505,7 @@
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TEST_TARGET_NAME = Aether;
 			};
 			name = Release;
@@ -533,6 +546,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		7C4AA2403087A95400F36919 /* XCLocalSwiftPackageReference "Packages/AetherKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/AetherKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		7C4AA2413087A95400F36919 /* AetherKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AetherKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 7C4AA20D3087A95300F36919 /* Project object */;
 	validationLevel = 1;
