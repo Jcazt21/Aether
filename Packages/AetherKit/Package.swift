@@ -10,7 +10,7 @@ let package = Package(
     name: "AetherKit",
     platforms: [.macOS("27.0")],
     products: [
-        .library(name: "AetherKit", targets: ["ByteKit", "TagKit", "FlacKit", "HiFiClient"]),
+        .library(name: "AetherKit", targets: ["ByteKit", "TagKit", "FlacKit", "HiFiClient", "Harvester"]),
     ],
     targets: [
         .target(name: "ByteKit", swiftSettings: settings),
@@ -22,5 +22,7 @@ let package = Package(
         .testTarget(name: "FlacKitTests", dependencies: ["FlacKit", "TagKit", "TestSupport"], swiftSettings: settings),
         .target(name: "HiFiClient", dependencies: ["TagKit"], swiftSettings: settings),
         .testTarget(name: "HiFiClientTests", dependencies: ["HiFiClient", "TestSupport"], swiftSettings: settings),
+        .target(name: "Harvester", dependencies: ["HiFiClient", "FlacKit", "TagKit"], swiftSettings: settings),
+        .testTarget(name: "HarvesterTests", dependencies: ["Harvester", "TestSupport"], swiftSettings: settings),
     ]
 )

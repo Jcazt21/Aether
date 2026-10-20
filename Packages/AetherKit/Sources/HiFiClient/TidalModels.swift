@@ -91,6 +91,21 @@ public struct PlaybackInfo: Codable, Sendable {
     public let trackPeakAmplitude: Double?
     public let albumReplayGain: Double?
     public let albumPeakAmplitude: Double?
+
+    public init(trackId: Int, audioQuality: String, manifestMimeType: String, manifest: String,
+                bitDepth: Int?, sampleRate: Int?, trackReplayGain: Double?, trackPeakAmplitude: Double?,
+                albumReplayGain: Double?, albumPeakAmplitude: Double?) {
+        self.trackId = trackId
+        self.audioQuality = audioQuality
+        self.manifestMimeType = manifestMimeType
+        self.manifest = manifest
+        self.bitDepth = bitDepth
+        self.sampleRate = sampleRate
+        self.trackReplayGain = trackReplayGain
+        self.trackPeakAmplitude = trackPeakAmplitude
+        self.albumReplayGain = albumReplayGain
+        self.albumPeakAmplitude = albumPeakAmplitude
+    }
 }
 
 public enum AudioQuality: String, Sendable, Codable {
