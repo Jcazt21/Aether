@@ -1,3 +1,4 @@
+import AetherCore
 import AppKit
 import Cosmos
 import HiFiClient
@@ -7,9 +8,24 @@ struct TrackTable: View {
     let tracks: [TidalTrack]
     @Binding var selection: Set<Int>
     @Environment(HarvesterStore.self) private var store
+    @Environment(PlayerModel.self) private var player
 
     var body: some View {
         Table(tracks, selection: $selection) {
+            TableColumn("") { track in
+                Button {
+                    player.preview(track, client: store.currentClient)
+                } label: {
+                    if player.isPreparingPreview && player.previewingTrackID == track.id {
+                        ProgressView().controlSize(.mini)
+                    } else {
+                        Image(systemName: player.previewingTrackID == track.id && player.state == .playing ? "pause.fill" : "play.fill")
+                    }
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel("Preescuchar")
+            }
+            .width(22)
             TableColumn("") { track in
                 switch store.masterMatch(for: track) {
                 case .exact(let item):

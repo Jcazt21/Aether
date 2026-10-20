@@ -30,6 +30,7 @@ final class HarvesterStore {
 
     var activeCount: Int { jobs.count { !$0.phase.isTerminal } }
     var failedCount: Int { jobs.count { if case .failed = $0.phase { true } else { false } } }
+    var currentClient: HiFiClient { client }
 
     @ObservationIgnored private let preferences: Preferences
     @ObservationIgnored private var client: HiFiClient

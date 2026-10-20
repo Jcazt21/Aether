@@ -3,6 +3,7 @@ import AppKit
 import CoreGraphics
 import Cosmos
 import Foundation
+import HiFiClient
 import Observation
 import TagKit
 
@@ -51,6 +52,9 @@ final class PlayerModel {
     private(set) var signal: SignalPath?
     private(set) var queue = PlayQueue()
     var meteringVisible = false { didSet { engine.setMetering(meteringVisible) } }
+    private(set) var previewingTrackID: Int?
+    private(set) var isPreparingPreview = false
+    @ObservationIgnored private let previewCache = PreviewCache()
 
     @ObservationIgnored let engine = PlaybackEngine()
     @ObservationIgnored private let preferences: Preferences
@@ -73,6 +77,17 @@ final class PlayerModel {
     func play(urls: [URL], startAt index: Int) {
         queue = PlayQueue(urls: urls, index: index)
         load(queue.current, autoplay: true)
+    }
+
+    func preview(_ track: TidalTrack, client: HiFiClient) {
+        if previewingTrackID == track.id, current != nil { toggle(); return }
+        previewingTrackID = track.id
+        isPreparingPreview = true
+        Task {
+            defer { isPreparingPreview = false }
+            guard let url = try? await previewCache.file(for: track, client: client), previewingTrackID == track.id else { return }
+            play(urls: [url], startAt: 0)
+        }
     }
 
     func toggle() {
