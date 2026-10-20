@@ -130,8 +130,14 @@ extension HarvestPipeline {
 
     /// Concurrent jobs may target the same name: retry with the next free counter instead of failing.
     static func moveToUniqueName(_ source: URL, folder: URL, baseName: String) throws -> URL {
+        let srcPath = source.path(percentEncoded: false)
         for _ in 0..<20 {
             let candidate = FileNaming.uniqueURL(in: folder, baseName: baseName, extension: "flac")
+            let dstPath = candidate.path(percentEncoded: false)
+            if renamex_np(srcPath, dstPath, UInt32(RENAME_EXCL)) == 0 {
+                return candidate
+            }
+            if errno == EEXIST { continue }
             do {
                 try FileManager.default.moveItem(at: source, to: candidate)
                 return candidate
