@@ -13,6 +13,9 @@ struct RootView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Tokens.canvas)
         }
+        .inspector(isPresented: $model.isInspectorPresented) {
+            TagInspectorView()
+        }
         .onChange(of: model.preferences.hifiBaseURL) { model.harvester.applyPreferences() }
         .onChange(of: model.preferences.maxConcurrentDownloads) { model.harvester.applyPreferences() }
         .onChange(of: model.route, initial: true) { _, route in

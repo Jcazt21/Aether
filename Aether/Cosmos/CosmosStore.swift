@@ -42,6 +42,34 @@ final class CosmosStore {
 
     func url(for item: LibraryItem) -> URL { item.url(in: root) }
 
+    // MARK: Tags
+
+    func loadFullTags(_ items: [LibraryItem]) async -> [TrackTags] {
+        let urls = items.map(url(for:))
+        return await Task.detached(priority: .userInitiated) { urls.map { (try? TagIO.read($0)) ?? TrackTags() } }.value
+    }
+
+    func saveTags(_ draft: TagDraft, for items: [LibraryItem], undoManager: UndoManager?) async {
+        let urls = items.map(url(for:)).filter(TagIO.isWritable)
+        let before = await Task.detached(priority: .userInitiated) { urls.map { (try? TagIO.read($0)) ?? TrackTags() } }.value
+        let after = before.map(draft.applied(to:))
+        await write(after, to: urls)
+        undoManager?.registerUndo(withTarget: self) { store in
+            Task { @MainActor in
+                await store.write(before, to: urls)
+                undoManager?.registerUndo(withTarget: store) { s in Task { @MainActor in await s.write(after, to: urls) } }
+            }
+        }
+        undoManager?.setActionName(items.count == 1 ? "Editar tags" : "Editar tags de \(items.count) pistas")
+    }
+
+    private func write(_ tags: [TrackTags], to urls: [URL]) async {
+        await Task.detached(priority: .userInitiated) {
+            for (t, url) in zip(tags, urls) { try? TagIO.write(t, to: url) }
+        }.value
+        await rescan()
+    }
+
     // MARK: Lifecycle
 
     func start() async {
