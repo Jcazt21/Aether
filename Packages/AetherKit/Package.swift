@@ -10,12 +10,14 @@ let package = Package(
     name: "AetherKit",
     platforms: [.macOS("27.0")],
     products: [
-        .library(name: "AetherKit", targets: ["ByteKit", "TagKit"]),
+        .library(name: "AetherKit", targets: ["ByteKit", "TagKit", "FlacKit"]),
     ],
     targets: [
         .target(name: "ByteKit", swiftSettings: settings),
         .testTarget(name: "ByteKitTests", dependencies: ["ByteKit"], swiftSettings: settings),
         .target(name: "TagKit", dependencies: ["ByteKit"], swiftSettings: settings),
         .testTarget(name: "TagKitTests", dependencies: ["TagKit"], swiftSettings: settings),
+        .target(name: "FlacKit", dependencies: ["ByteKit", "TagKit"], swiftSettings: settings),
+        .testTarget(name: "FlacKitTests", dependencies: ["FlacKit", "TagKit"], swiftSettings: settings),
     ]
 )
