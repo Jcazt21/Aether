@@ -1,5 +1,6 @@
 import Testing
 @testable import FlacKit
+import TestSupport
 
 @Suite struct CRCAndHeaderTests {
     @Test func crcCheckValues() {

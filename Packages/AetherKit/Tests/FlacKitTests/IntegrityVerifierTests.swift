@@ -3,6 +3,7 @@ import Foundation
 import Testing
 @testable import FlacKit
 import TagKit
+import TestSupport
 
 @Suite struct IntegrityVerifierTests {
     /// Writes the reference MD5 (of the PCM we generated) into STREAMINFO, like Tidal's dfLa provides.

@@ -2,6 +2,7 @@ import CryptoKit
 import Foundation
 import Testing
 @testable import FlacKit
+import TestSupport
 
 @Suite struct PCMDigestTests {
     @Test(arguments: [16, 24])
@@ -27,5 +28,3 @@ import Testing
         }
     }
 }
-
-final class ProgressBox: @unchecked Sendable { var values: [Double] = [] }

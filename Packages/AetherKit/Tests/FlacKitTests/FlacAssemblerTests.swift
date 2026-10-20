@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import FlacKit
 import TagKit
+import TestSupport
 
 @Suite struct FlacAssemblerTests {
     private let header = [FMP4FlacTests.si.block, FlacBlock.padding(64)]

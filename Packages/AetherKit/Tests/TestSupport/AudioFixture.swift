@@ -1,14 +1,14 @@
-import AudioToolbox
-import Foundation
+public import AudioToolbox
+public import Foundation
 
-enum AudioFixture {
-    struct Failure: Error { let status: OSStatus }
+public enum AudioFixture {
+    public struct Failure: Error { public let status: OSStatus }
 
     private static func check(_ s: OSStatus) throws { if s != noErr { throw Failure(status: s) } }
 
     /// Encodes a deterministic two-tone signal to FLAC and returns the exact PCM fed to the encoder
     /// (interleaved, signed, little-endian, `bits/8` bytes per sample) — the FLAC MD5 reference layout.
-    static func makeFLAC(seconds: Double = 2, sampleRate: Double = 44_100, bits: Int = 16, channels: Int = 2) throws -> (url: URL, pcm: [UInt8]) {
+    public static func makeFLAC(seconds: Double = 2, sampleRate: Double = 44_100, bits: Int = 16, channels: Int = 2) throws -> (url: URL, pcm: [UInt8]) {
         let frames = Int(seconds * sampleRate)
         let bytesPerSample = bits / 8
         let amplitude = Double((1 << (bits - 1)) - 1) * 0.6

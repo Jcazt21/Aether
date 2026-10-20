@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import FlacKit
 import TagKit
+import TestSupport
 
 @Suite struct FlacFrameScannerTests {
     @Test(arguments: [16, 24])

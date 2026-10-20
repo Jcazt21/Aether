@@ -1,6 +1,7 @@
 import Testing
 @testable import FlacKit
 import TagKit
+import TestSupport
 
 @Suite struct FMP4FlacTests {
     static let si = StreamInfo(minBlockSize: 4096, maxBlockSize: 4096, minFrameSize: 0, maxFrameSize: 0,

@@ -18,6 +18,7 @@ let package = Package(
         .target(name: "TagKit", dependencies: ["ByteKit"], swiftSettings: settings),
         .testTarget(name: "TagKitTests", dependencies: ["TagKit"], swiftSettings: settings),
         .target(name: "FlacKit", dependencies: ["ByteKit", "TagKit"], swiftSettings: settings),
-        .testTarget(name: "FlacKitTests", dependencies: ["FlacKit", "TagKit"], swiftSettings: settings),
+        .target(name: "TestSupport", dependencies: ["TagKit"], path: "Tests/TestSupport", swiftSettings: settings),
+        .testTarget(name: "FlacKitTests", dependencies: ["FlacKit", "TagKit", "TestSupport"], swiftSettings: settings),
     ]
 )
