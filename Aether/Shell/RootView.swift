@@ -19,7 +19,9 @@ struct RootView: View {
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             TransportBar()
-                .transition(reduceMotion ? .opacity : .opacity.combined(with: .offset(y: 8)))
+                .transition(.asymmetric(
+                    insertion: reduceMotion ? .opacity : .opacity.combined(with: .offset(y: 8)),
+                    removal: .opacity.animation(.easeOut(duration: 0.12))))
         }
         .animation(reduceMotion ? .easeOut(duration: 0.15) : Tokens.Motion.enter, value: model.player.current?.url)
         .onKeyPress(.space) {
