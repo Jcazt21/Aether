@@ -3,6 +3,7 @@ import AppKit
 final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Set by AetherApp so termination can restore the DAC's original sample rate.
     var onTerminate: (() -> Void)?
+    let dockMenu = DockMenuBuilder()
 
     func applicationWillFinishLaunching(_ notification: Notification) {
         // Dark-only product: menus, alerts and panels follow the window appearance.
@@ -13,4 +14,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
 
     func applicationWillTerminate(_ notification: Notification) { onTerminate?() }
+
+    func applicationDockMenu(_ sender: NSApplication) -> NSMenu? { dockMenu.menu() }
 }

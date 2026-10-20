@@ -17,7 +17,10 @@ struct AetherApp: App {
                 .environment(model.player)
                 .preferredColorScheme(.dark)
                 .frame(minWidth: 960, minHeight: 600)
-                .onAppear { appDelegate.onTerminate = { [player = model.player] in player.shutdown() } }
+                .onAppear {
+                    appDelegate.onTerminate = { [player = model.player] in player.shutdown() }
+                    appDelegate.dockMenu.player = model.player
+                }
         }
         .defaultSize(width: 1280, height: 800)
         .windowToolbarStyle(.unified)
