@@ -1,4 +1,5 @@
 Spikes/out/
 .DS_Store
 .build/
+build/
 DerivedData/
