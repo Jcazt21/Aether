@@ -61,6 +61,36 @@ public enum FlacMetadataIO {
         return FlacHeader(blocks: blocks, audioOffset: offset)
     }
 
+    /// Header read for indexing: PICTURE payloads are skipped (seeked over), returned empty.
+    public static func readSkippingPictures(_ url: URL) throws -> (header: FlacHeader, hasPicture: Bool) {
+        let handle = try FileHandle(forReadingFrom: url)
+        defer { try? handle.close() }
+        let head = (try handle.read(upToCount: 10)).map { [UInt8]($0) } ?? []
+        let start = try leadingID3Length(head)
+        try handle.seek(toOffset: UInt64(start))
+        guard (try? handle.readExactly(4)) == magic else { throw FlacError.notFlac }
+        var blocks: [FlacBlock] = []
+        var offset = start + 4
+        var isLast = false
+        var hasPicture = false
+        while !isLast {
+            let h = try handle.readExactly(4)
+            isLast = h[0] & 0x80 != 0
+            let type = h[0] & 0x7F
+            let length = Int(h[1]) << 16 | Int(h[2]) << 8 | Int(h[3])
+            if type == FlacBlockType.picture {
+                hasPicture = true
+                try handle.seek(toOffset: UInt64(offset + 4 + length))
+                blocks.append(FlacBlock(type: type, payload: []))
+            } else {
+                blocks.append(FlacBlock(type: type, payload: try handle.readExactly(length)))
+            }
+            offset += 4 + length
+        }
+        guard blocks.first?.type == FlacBlockType.streamInfo else { throw FlacError.missingStreamInfo }
+        return (FlacHeader(blocks: blocks, audioOffset: offset), hasPicture)
+    }
+
     public static func serialize(_ blocks: [FlacBlock]) throws -> [UInt8] {
         var w = ByteWriter(reservingCapacity: 4 + blocks.reduce(0) { $0 + 4 + $1.payload.count })
         w.append(magic)

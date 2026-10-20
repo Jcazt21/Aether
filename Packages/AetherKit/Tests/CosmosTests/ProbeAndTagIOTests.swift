@@ -59,6 +59,21 @@ import TestSupport
         #expect(item.displayArtist == "Prospa")
     }
 
+    @Test func itemReaderSkipsLargePicturePayloadDuringScan() throws {
+        let (url, _) = try AudioFixture.makeFLAC(seconds: 1)
+        let bigPicture = Data(repeating: 0xAB, count: 2_000_000)
+        try FlacTags.write(TrackTags(title: "Heavy", artist: "Prospa",
+                                     artwork: .init(data: bigPicture, mimeType: "image/jpeg")),
+                           to: url, extraFields: ["AETHER_VERIFIED": "md5:1234567890abcdef;2026-10-20T00:00:00Z"])
+        let (header, hasPicture) = try FlacMetadataIO.readSkippingPictures(url)
+        #expect(hasPicture)
+        #expect(header.blocks.reduce(0) { $0 + $1.payload.count } < 64_000)
+        let item = try ItemReader.read(url: url, relativePath: "UK House/Prospa - Heavy.flac", fileSize: 10, modified: .distantPast)
+        #expect(item.hasArtwork)
+        #expect(item.tags.artwork == nil)
+        #expect(item.verifiedStamp == "md5:1234567890abcdef;2026-10-20T00:00:00Z")
+    }
+
     @Test func displayFallsBackToFileName() {
         let item = LibraryItem(relativePath: "b2bsept.wav", fileSize: 1, modified: .distantPast,
                                format: AudioFormatInfo(codec: .wav, sampleRate: 44_100, bitDepth: 16, channels: 2, duration: 1, bitRate: nil),

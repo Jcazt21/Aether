@@ -1,3 +1,4 @@
+import FlacKit
 public import Foundation
 public import TagKit
 
@@ -48,6 +49,17 @@ public struct LibraryItem: Codable, Sendable, Identifiable, Equatable {
 
 public enum ItemReader {
     public static func read(url: URL, relativePath: String, fileSize: Int64, modified: Date) throws -> LibraryItem {
+        if url.pathExtension.lowercased() == "flac",
+           let (header, hasPicture) = try? FlacMetadataIO.readSkippingPictures(url),
+           let si = try? header.streamInfo() {
+            let format = AudioFormatInfo(codec: .flac, sampleRate: Double(si.sampleRate), bitDepth: Int(si.bitsPerSample),
+                                         channels: Int(si.channels), duration: si.duration, bitRate: nil)
+            let vorbis = (try? header.blocks(ofType: FlacBlockType.vorbisComment).first.map { try VorbisComment(payload: $0.payload) }) ?? VorbisComment()
+            let tags = TrackTags(vorbis: vorbis, frontCover: nil)
+            return LibraryItem(relativePath: relativePath, fileSize: fileSize, modified: modified, format: format,
+                               tags: tags, hasArtwork: hasPicture,
+                               verifiedStamp: vorbis.first(IntegrityVerifier.verifiedFieldKey))
+        }
         let format = try AudioProbe.probe(url)
         let full = (try? TagIO.read(url)) ?? TrackTags()
         return LibraryItem(relativePath: relativePath, fileSize: fileSize, modified: modified, format: format,
