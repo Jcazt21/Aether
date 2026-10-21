@@ -48,7 +48,6 @@ struct PlayQueue: Equatable {
 final class PlayerModel {
     private(set) var current: NowPlaying?
     private(set) var state: PlaybackEngine.State = .idle
-    private(set) var waveform: [Float] = []
     private(set) var signal: SignalPath?
     private(set) var queue = PlayQueue()
     var meteringVisible = false { didSet { engine.setMetering(meteringVisible) } }
@@ -58,7 +57,6 @@ final class PlayerModel {
 
     @ObservationIgnored let engine = PlaybackEngine()
     @ObservationIgnored private let preferences: Preferences
-    @ObservationIgnored private var waveformCache: [String: [Float]] = [:]
     @ObservationIgnored private var loadTask: Task<Void, Never>?
     // @Observable does not support `lazy`: assigned once at the end of init.
     @ObservationIgnored private(set) var nowPlaying: NowPlayingBridge!
@@ -95,7 +93,6 @@ final class PlayerModel {
                 }
                 current = NowPlaying(url: manifest.initializationURL, title: track.displayTitle, artist: track.allArtistNames,
                                      album: track.album?.title, formatLabel: "TIDAL · \(info.bitDepth ?? 16)/44.1 · STREAM", artwork: nil)
-                waveform = []
             } catch {
                 guard let url = try? await previewCache.file(for: track, client: client), previewingTrackID == track.id else { return }
                 play(urls: [url], startAt: 0)
@@ -145,24 +142,21 @@ final class PlayerModel {
             return
         }
         refreshSignal()
-        let key = "\(url.path)|\(probe?.duration ?? 0)"
-        waveform = waveformCache[key] ?? []
         loadTask = Task {
-            async let tags = Task.detached(priority: .userInitiated) { (try? TagIO.read(url)) ?? TrackTags() }.value
-            async let peaks = Task.detached(priority: .utility) { try? WaveformAnalyzer.peaks(for: url, bins: 1200) }.value
-            let t = await tags
-            let art = await Task.detached(priority: .userInitiated) { t.artwork.flatMap { ArtworkProcessor.thumbnail($0.data, maxPixel: 128) } }.value
+            let (t, art) = await Self.readMetadata(at: url)
             guard !Task.isCancelled else { return }
             let stem = url.deletingPathExtension().lastPathComponent
             current = NowPlaying(url: url, title: t.title ?? stem, artist: t.artist ?? "", album: t.album,
                                  formatLabel: probe?.label ?? url.pathExtension.uppercased(), artwork: art)
             nowPlaying.update()
-            if waveform.isEmpty, let p = await peaks, !Task.isCancelled {
-                waveform = p
-                waveformCache[key] = p
-                if waveformCache.count > 32 { waveformCache.removeValue(forKey: waveformCache.keys.first!) }
-            }
         }
+    }
+
+    @concurrent
+    private nonisolated static func readMetadata(at url: URL) async -> (TrackTags, CGImage?) {
+        let tags = (try? TagIO.read(url)) ?? TrackTags()
+        guard !Task.isCancelled else { return (tags, nil) }
+        return (tags, tags.artwork.flatMap { ArtworkProcessor.thumbnail($0.data, maxPixel: 128) })
     }
 
     private func syncState() {
