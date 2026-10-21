@@ -38,3 +38,14 @@ import Testing
         #expect(second.lastPathComponent == "Prospa - Dreams (2).flac")
     }
 }
+
+@Suite struct FileNamingTemplateTests {
+    @Test func rendersPlaceholders() {
+        #expect(FileNaming.render(template: "{title} - {artist}", discNumber: 1, trackNumber: 3,
+                                  artist: "Prospa", title: "Dreams", album: "LP") == "Dreams - Prospa")
+        #expect(FileNaming.render(template: "{discNumber}-{trackNumber} {artist}/{album}", discNumber: 2, trackNumber: 3,
+                                  artist: "AC/DC", title: nil, album: "LP") == "2-03 AC-DC-LP")
+        #expect(FileNaming.render(template: "{album}", discNumber: nil, trackNumber: nil,
+                                  artist: nil, title: nil, album: nil) == nil)
+    }
+}

@@ -8,8 +8,8 @@ struct SettingsView: View {
     var body: some View {
         TabView {
             Tab("General", systemImage: "gearshape") { GeneralSettings() }
-            Tab("Harvester", systemImage: "arrow.down.circle") { HarvesterSettings() }
-            Tab("Aether Core", systemImage: "waveform") { CoreSettings() }
+            Tab("Hermes", systemImage: "arrow.down.circle") { HarvesterSettings() }
+            Tab("Lyra", systemImage: "waveform") { CoreSettings() }
         }
         .frame(width: 520)
         .scenePadding()
@@ -61,6 +61,12 @@ private struct HarvesterSettings: View {
                 }
                 Stepper("Descargas simultáneas: \(preferences.maxConcurrentDownloads)",
                         value: $preferences.maxConcurrentDownloads, in: 1...4)
+                VStack(alignment: .leading, spacing: 4) {
+                    TextField("Plantilla de nombre", text: $preferences.filenameTemplate)
+                        .font(.readout)
+                    Text("Personaliza el nombre de los archivos descargados. Disponibles: {discNumber}, {trackNumber}, {artist}, {title}, {album}")
+                        .font(.callout).foregroundStyle(.secondary)
+                }
             } header: { SectionLabel("Descarga") }
             Section {
                 Toggle("Mantener rekordbox.xml", isOn: $preferences.rekordboxXMLEnabled)

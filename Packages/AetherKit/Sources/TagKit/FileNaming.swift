@@ -35,6 +35,24 @@ public enum FileNaming {
         }
     }
 
+    public static let defaultTemplate = "{artist} - {title}"
+
+    /// Fills `{discNumber}`, `{trackNumber}`, `{artist}`, `{title}`, `{album}`; each value is sanitized. Empty result → nil.
+    public static func render(template: String, discNumber: Int?, trackNumber: Int?,
+                              artist: String?, title: String?, album: String?) -> String? {
+        let values: [String: String] = [
+            "{discNumber}": discNumber.map(String.init) ?? "",
+            "{trackNumber}": trackNumber.map { String(format: "%02d", $0) } ?? "",
+            "{artist}": artist.map(sanitize) ?? "",
+            "{title}": title.map(sanitize) ?? "",
+            "{album}": album.map(sanitize) ?? "",
+        ]
+        var out = template
+        for (key, value) in values { out = out.replacingOccurrences(of: key, with: value) }
+        out = sanitize(out.replacingOccurrences(of: "\\", with: "-"))
+        return out.isEmpty ? nil : out
+    }
+
     public static func uniqueURL(in folder: URL, baseName: String, extension ext: String,
                                  fileManager: FileManager = .default) -> URL {
         var candidate = folder.appending(path: "\(baseName).\(ext)")

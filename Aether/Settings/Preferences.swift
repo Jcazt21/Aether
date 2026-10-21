@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import TagKit
 
 @MainActor
 @Observable
@@ -13,6 +14,7 @@ final class Preferences {
         static let bitPerfect = "bitPerfect"
         static let xmlEnabled = "rekordboxXMLEnabled"
         static let xmlURL = "rekordboxXMLURL"
+        static let filenameTemplate = "filenameTemplate"
     }
 
     @ObservationIgnored private let defaults: UserDefaults
@@ -33,6 +35,8 @@ final class Preferences {
     var rekordboxXMLEnabled: Bool { didSet { defaults.set(rekordboxXMLEnabled, forKey: Key.xmlEnabled) } }
     var rekordboxXMLURL: URL { didSet { defaults.set(rekordboxXMLURL.path, forKey: Key.xmlURL) } }
 
+    var filenameTemplate: String { didSet { defaults.set(filenameTemplate, forKey: Key.filenameTemplate) } }
+
     var inboxFolder: URL { masterFolder.appending(path: inboxFolderName) }
 
     init(defaults: UserDefaults = .standard) {
@@ -46,6 +50,7 @@ final class Preferences {
         maxConcurrentDownloads = storedConcurrency == 0 ? 3 : min(max(storedConcurrency, 1), 4)
         bitPerfect = defaults.object(forKey: Key.bitPerfect) as? Bool ?? true
         rekordboxXMLEnabled = defaults.object(forKey: Key.xmlEnabled) as? Bool ?? true
+        filenameTemplate = defaults.string(forKey: Key.filenameTemplate) ?? FileNaming.defaultTemplate
         rekordboxXMLURL = defaults.string(forKey: Key.xmlURL).map { URL(filePath: $0) }
             ?? home.appending(path: "Music/Aether/rekordbox.xml")
     }

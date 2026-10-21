@@ -40,6 +40,13 @@ public final class PlaybackEngine {
     private var isMetering = false
     private var configObserver: (any NSObjectProtocol)?
     private var streamTask: Task<Void, Never>?
+    private var streamSource: StreamSource?
+
+    private struct StreamSource {
+        let manifest: DashManifest
+        let makeDecoder: @Sendable () throws -> FlacPacketDecoder
+        let fetch: @Sendable (URL) async throws -> [UInt8]
+    }
 
     public init() {
         engine.attach(player)
@@ -60,6 +67,7 @@ public final class PlaybackEngine {
     @discardableResult
     public func load(_ url: URL, bitDepth: Int?) throws -> LoadedTrack {
         stop()
+        streamSource = nil
         let file = try AVAudioFile(forReading: url)
         self.file = file
         let format = file.processingFormat
@@ -78,7 +86,7 @@ public final class PlaybackEngine {
         engine.mainMixerNode.outputVolume = 1
         player.volume = 1
         engine.disconnectNodeOutput(player)
-        engine.connect(player, to: engine.mainMixerNode, format: format)
+        try engine.connectNode(player, to: engine.mainMixerNode, format: format)
         engine.prepare()
         startFrame = 0
         state = .paused
@@ -89,7 +97,7 @@ public final class PlaybackEngine {
         guard file != nil, state != .playing else { return }
         if !engine.isRunning { try engine.start() }
         if !isScheduled { schedule(from: startFrame) }
-        player.play()
+        try player.playAudio()
         state = .playing
     }
 
@@ -104,7 +112,8 @@ public final class PlaybackEngine {
     public func stop() {
         generation += 1
         streamTask?.cancel()
-        player.stop()
+        // player.stop() blocks the caller until the audio thread acknowledges; skip it when nothing is queued or running.
+        if isScheduled || state == .playing || streamSource != nil { player.stop() }
         isScheduled = false
         startFrame = 0
         if state != .idle { state = file == nil ? .idle : .paused }
@@ -117,40 +126,94 @@ public final class PlaybackEngine {
         streamTask?.cancel()
         file = nil
         let config = try FMP4Flac.parseInit(initSegment)
-        let decoder = try FlacPacketDecoder(config: config, cookie: try StreamCookie.make(from: initSegment), maxPacketSize: 1 << 20)
-        let format = decoder.outputFormat
+        let cookie = try StreamCookie.make(from: initSegment)
+        let makeDecoder: @Sendable () throws -> FlacPacketDecoder = {
+            try FlacPacketDecoder(config: config, cookie: cookie, maxPacketSize: 1 << 20)
+        }
+        let format = try makeDecoder().outputFormat
         engine.stop()
         engine.disconnectNodeOutput(player)
-        engine.connect(player, to: engine.mainMixerNode, format: format)
+        try engine.connectNode(player, to: engine.mainMixerNode, format: format)
         engine.prepare()
         try engine.start()
         let loaded = LoadedTrack(url: manifest.initializationURL, sampleRate: format.sampleRate,
                                  channels: Int(format.channelCount), bitDepth: bitDepth, frames: Int64(manifest.totalSamples))
         track = loaded
-        generation += 1
-        let token = generation
-        let inFlight = InFlightCounter()
-        streamTask = Task { [weak self] in
-            for number in manifest.segmentNumbers {
-                while inFlight.value >= 3 { try? await Task.sleep(for: .milliseconds(100)) }
-                guard !Task.isCancelled, let bytes = try? await fetch(manifest.mediaURL(number: number)),
-                      let pcm = try? decoder.decode(segment: bytes), let self, self.generation == token else { return }
-                inFlight.increment()
-                self.player.scheduleBuffer(pcm, completionCallbackType: .dataPlayedBack) { _ in inFlight.decrement() }
-            }
-        }
-        player.play()
+        streamSource = StreamSource(manifest: manifest, makeDecoder: makeDecoder, fetch: fetch)
+        try startStreaming(atFrame: 0)
+        try player.playAudio()
         state = .playing
         return loaded
     }
 
+    /// (Re)starts the fetch → decode → schedule pipeline at `frame`, from the segment that contains it.
+    /// The leading frames of that first segment are trimmed so the seek lands on the requested position.
+    private func startStreaming(atFrame frame: Int64) throws {
+        guard let source = streamSource, let track else { return }
+        let manifest = source.manifest
+        let decoder = try source.makeDecoder()
+        let fetch = source.fetch
+        let scale = manifest.timescale == manifest.sampleRate ? 1.0 : Double(manifest.sampleRate) / Double(manifest.timescale)
+        var index = 0
+        var segmentStart: Int64 = 0
+        for duration in manifest.segmentDurations {
+            let frames = Int64(Double(duration) * scale)
+            if segmentStart + frames > frame { break }
+            segmentStart += frames
+            index += 1
+        }
+        index = min(index, max(manifest.segmentCount - 1, 0))
+        let skip = AVAudioFrameCount(max(min(frame - segmentStart, track.frames), 0))
+        startFrame = segmentStart + Int64(skip)
+        generation += 1
+        let token = generation
+        let inFlight = InFlightCounter()
+        let numbers = Array(manifest.segmentNumbers).dropFirst(index)
+        streamTask = Task { [weak self] in
+            var trim = skip
+            for number in numbers {
+                while inFlight.value >= 3 { try? await Task.sleep(for: .milliseconds(100)) }
+                guard !Task.isCancelled, let bytes = try? await fetch(manifest.mediaURL(number: number)),
+                      let decoded = try? decoder.decode(segment: bytes), let self, self.generation == token else { return }
+                let pcm = trim > 0 ? Self.dropping(trim, from: decoded) : decoded
+                trim = 0
+                guard let pcm else { continue }
+                inFlight.increment()
+                self.player.scheduleBuffer(pcm, completionCallbackType: .dataPlayedBack) { _ in inFlight.decrement() }
+            }
+        }
+    }
+
+    private static func dropping(_ frames: AVAudioFrameCount, from buffer: AVAudioPCMBuffer) -> AVAudioPCMBuffer? {
+        guard frames < buffer.frameLength,
+              let out = AVAudioPCMBuffer(pcmFormat: buffer.format, frameCapacity: buffer.frameLength - frames) else { return nil }
+        out.frameLength = buffer.frameLength - frames
+        let bytesPerFrame = Int(buffer.format.streamDescription.pointee.mBytesPerFrame)
+        let src = UnsafeMutableAudioBufferListPointer(UnsafeMutablePointer(mutating: buffer.audioBufferList))
+        let dst = UnsafeMutableAudioBufferListPointer(out.mutableAudioBufferList)
+        for (from, to) in zip(src, dst) {
+            guard let fromData = from.mData, let toData = to.mData else { continue }
+            memcpy(toData, fromData + Int(frames) * bytesPerFrame, Int(out.frameLength) * bytesPerFrame)
+        }
+        return out
+    }
+
     public func seek(to seconds: Double) {
+        if file == nil, streamSource != nil, let track {
+            let wasPlaying = state == .playing
+            streamTask?.cancel()
+            player.stop()
+            let frame = Int64(min(max(seconds, 0), track.duration) * track.sampleRate)
+            try? startStreaming(atFrame: min(frame, max(track.frames - 1, 0)))
+            if wasPlaying { try? player.playAudio() }
+            return
+        }
         guard let file else { return }
         let rate = file.processingFormat.sampleRate
         let frame = min(max(AVAudioFramePosition(seconds * rate), 0), file.length)
         let wasPlaying = state == .playing
         schedule(from: frame)
-        if wasPlaying { player.play() }
+        if wasPlaying { try? player.playAudio() }
     }
 
     public var currentTime: Double {
@@ -163,13 +226,18 @@ public final class PlaybackEngine {
         return min(Double(startFrame + max(playerTime.sampleTime, 0)) / rate, track.duration)
     }
 
+    /// Built outside the actor: the tap runs on a realtime audio queue, and a closure created in a
+    /// `@MainActor` method inherits that isolation and trips libdispatch's queue assertion.
+    private nonisolated static func meterBlock(_ meter: MeterTap) -> @Sendable (AVAudioPCMBuffer, AVAudioTime) -> Void {
+        { buffer, _ in meter.process(buffer) }
+    }
+
     public func setMetering(_ on: Bool) {
         guard on != isMetering else { return }
         isMetering = on
         let mixer = engine.mainMixerNode
         if on {
-            let meter = meter
-            mixer.installTap(onBus: 0, bufferSize: 2048, format: nil) { buffer, _ in meter.process(buffer) }
+            try? mixer.__installTap(onBus: 0, bufferSize: 2048, format: nil, error: (), block: Self.meterBlock(meter))
         } else {
             mixer.removeTap(onBus: 0)
             meter.reset()
@@ -201,7 +269,7 @@ public final class PlaybackEngine {
 
     private func segmentFinished(_ token: Int) {
         guard token == generation, state == .playing else { return }
-        player.stop()
+        // Nothing is left queued: `schedule(from:)` stops the node before the next play, so no blocking stop() here.
         isScheduled = false
         startFrame = 0
         state = .idle
@@ -214,12 +282,12 @@ public final class PlaybackEngine {
         let resumeAt = currentTime
         let wasPlaying = state == .playing
         engine.disconnectNodeOutput(player)
-        engine.connect(player, to: engine.mainMixerNode, format: file.processingFormat)
+        try? engine.connectNode(player, to: engine.mainMixerNode, format: file.processingFormat)
         engine.prepare()
         if wasPlaying {
             try? engine.start()
             seek(to: resumeAt)
-            player.play()
+            try? player.playAudio()
         } else {
             startFrame = AVAudioFramePosition(resumeAt * file.processingFormat.sampleRate)
         }

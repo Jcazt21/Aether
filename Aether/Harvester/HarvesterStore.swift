@@ -6,6 +6,15 @@ import HiFiClient
 import Observation
 import UserNotifications
 
+struct PlaylistImport: Equatable {
+    var name: String
+    var total: Int
+    var processed = 0
+    var unmatched: [String] = []
+    var isDone: Bool { processed >= total }
+    var matched: Int { processed - unmatched.count }
+}
+
 enum SearchScope: String, CaseIterable {
     case tracks, albums
     var title: String { self == .tracks ? "Pistas" : "Álbumes" }
@@ -22,10 +31,18 @@ final class HarvesterStore {
     private(set) var albumResults: [TidalAlbum] = []
     private(set) var isSearching = false
     private(set) var searchError: String?
+    private(set) var playlistImport: PlaylistImport?
     var selectedTrackIDs: Set<Int> = []
     var destination: URL
     private(set) var destinationFolders: [URL] = []
     var masterLookup: MasterLookup = .empty
+    @ObservationIgnored var deferredLookup: MasterLookup?
+
+    func applyDeferredLookup() {
+        guard let lookup = deferredLookup else { return }
+        deferredLookup = nil
+        masterLookup = lookup
+    }
     var pendingDuplicates: [TidalTrack]?
 
     private(set) var activeCount = 0
@@ -96,6 +113,8 @@ final class HarvesterStore {
 
     func search() async {
         let query = searchQuery.trimmingCharacters(in: .whitespaces)
+        if let id = SpotifyImport.playlistID(from: query) { await importPlaylist(id: id); return }
+        playlistImport = nil
         guard query.count >= 2 else { trackResults = []; albumResults = []; searchError = nil; return }
         isSearching = true
         defer { isSearching = false }
@@ -108,6 +127,55 @@ final class HarvesterStore {
         } catch is CancellationError {
         } catch {
             searchError = HarvestEngine.message(for: error)
+        }
+    }
+
+    /// Spotify playlist link → the same results list as a search: every track found on Tidal, in playlist order, pre-selected.
+    private func importPlaylist(id: String) async {
+        searchScope = .tracks
+        isSearching = true
+        trackResults = []
+        selectedTrackIDs = []
+        defer { isSearching = false }
+        do {
+            let playlist = try await SpotifyImport.fetch(id: id)
+            var state = PlaylistImport(name: playlist.name, total: playlist.tracks.count)
+            playlistImport = state
+            searchError = nil
+            let client = client
+            var found: [Int: TidalTrack] = [:]
+            await withTaskGroup(of: (Int, TidalTrack?).self) { group in
+                var next = 0
+                func addNext() {
+                    guard next < playlist.tracks.count else { return }
+                    let index = next, wanted = playlist.tracks[index]
+                    next += 1
+                    group.addTask {
+                        let first = wanted.artists.split(separator: ",").first.map(String.init) ?? wanted.artists
+                        let items = (try? await client.searchTracks("\(first) \(wanted.title)", limit: 10).items) ?? []
+                        return (index, TrackMatcher.best(for: wanted, in: items))
+                    }
+                }
+                for _ in 0..<4 { addNext() }
+                for await (index, track) in group {
+                    if Task.isCancelled { group.cancelAll(); break }
+                    let wanted = playlist.tracks[index]
+                    state.processed += 1
+                    if let track { found[index] = track } else { state.unmatched.append("\(wanted.artists) – \(wanted.title)") }
+                    playlistImport = state
+                    trackResults = found.keys.sorted().compactMap { found[$0] }
+                    addNext()
+                }
+            }
+            selectedTrackIDs = Set(trackResults.map(\.id))
+        } catch is CancellationError {
+            playlistImport = nil
+        } catch SpotifyError.unreadable {
+            playlistImport = nil
+            searchError = "No pude leer esa playlist. Debe ser pública."
+        } catch {
+            playlistImport = nil
+            searchError = "No pude conectar con Spotify."
         }
     }
 
@@ -150,7 +218,8 @@ final class HarvesterStore {
     func enqueue(_ tracks: [TidalTrack]) {
         let genre = destination.standardizedFileURL == preferences.inboxFolder.standardizedFileURL ? nil : destination.lastPathComponent
         let policy = QualityPolicy(rawValue: preferences.qualityPolicyRaw) ?? .hiResCapped96
-        let requests = tracks.map { HarvestRequest(track: $0, destinationFolder: destination, genre: genre, policy: policy) }
+        let requests = tracks.map { HarvestRequest(track: $0, destinationFolder: destination, genre: genre, policy: policy,
+                                                    filenameTemplate: preferences.filenameTemplate) }
         register(requests)
         Task { await engine.enqueue(requests) }
         requestNotificationPermissionOnce()
@@ -224,7 +293,7 @@ final class HarvesterStore {
         NSApp.dockTile.badgeLabel = active > 0 ? "\(active)" : nil
         if active > 0, activity == nil {
             activity = ProcessInfo.processInfo.beginActivity(options: .userInitiatedAllowingIdleSystemSleep,
-                                                             reason: "Harvester downloads")
+                                                             reason: "Hermes downloads")
         } else if active == 0, let token = activity {
             ProcessInfo.processInfo.endActivity(token)
             activity = nil
@@ -246,7 +315,7 @@ final class HarvesterStore {
         defer { batchVerified = 0; batchFailed = 0 }
         guard !NSApp.isActive, batchVerified + batchFailed > 0 else { return }
         let content = UNMutableNotificationContent()
-        content.title = "Harvester terminó"
+        content.title = "Hermes terminó"
         content.body = batchFailed == 0
             ? "\(batchVerified) pistas verificadas"
             : "\(batchVerified) verificadas · \(batchFailed) fallidas"
@@ -258,11 +327,13 @@ final class HarvesterStore {
 actor AlbumCache {
     private let fetch: @Sendable (Int) async -> TidalAlbum?
     private var cache: [Int: TidalAlbum] = [:]
+    private var inFlight: [Int: Task<TidalAlbum?, Never>] = [:]
 
     init(client: HiFiClient) { fetch = { id in try? await client.album(id: id).album } }
     init(fetch: @escaping @Sendable (Int) async -> TidalAlbum?) { self.fetch = fetch }
 
     func album(_ id: Int) async -> TidalAlbum? {
+        guard id != 0 else { return nil }
         if let hit = cache[id] { return hit }
         if let existing = inFlight[id] { return await existing.value }
         let fetch = fetch
@@ -274,5 +345,3 @@ actor AlbumCache {
         return album
     }
 }
-    private var inFlight: [Int: Task<TidalAlbum?, Never>] = [:]
-        guard id != 0 else { return nil }

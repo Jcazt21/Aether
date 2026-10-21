@@ -1,5 +1,110 @@
-Spikes/out/
+# --- macOS ---
 .DS_Store
-.build/
+.AppleDouble
+.LSOverride
+._*
+
+# --- Xcode / SwiftPM build output ---
 build/
 DerivedData/
+.build/
+.swiftpm/
+*.xcarchive
+*.xcresult
+*.dSYM/
+*.dSYM.zip
+*.ipa
+*.app
+*.dmg
+*.pkg
+*.zip
+
+# --- Xcode per-user state ---
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+*.moved-aside
+*.hmap
+
+# --- Code coverage / profiling ---
+*.profraw
+*.profdata
+*.gcda
+*.gcno
+*.trace
+
+# --- Secrets, keys & credentials (never commit) ---
+.env
+.env.*
+!.env.example
+*.env
+*.pem
+*.key
+*.p8
+*.p12
+*.pfx
+*.cer
+*.crt
+*.csr
+*.der
+*.jks
+*.keystore
+*.mobileprovision
+*.provisionprofile
+*.certSigningRequest
+*.gpg
+*.asc
+id_rsa*
+id_ed25519*
+secrets.*
+secret.*
+*secret*
+*credential*
+*token*.json
+*token*.txt
+auth.json
+config.local.*
+*.local.xcconfig
+Secrets.xcconfig
+Local.xcconfig
+ExportOptions.local.plist
+GoogleService-Info.plist
+*.entitlements.local
+
+# --- Notarization / signing artifacts ---
+*.notarization
+notarytool*.json
+AuthKey_*.p8
+fastlane/report.xml
+fastlane/*.json
+
+# --- Personal media, downloads & app data ---
+# Music pulled through Tidal/Harvester and spike outputs
+Spikes/out/
+*.flac
+*.wav
+*.aiff
+*.aif
+*.mp3
+*.m4a
+*.m4s
+*.mp4
+*.alac
+*.ogg
+*.opus
+# Local app state (queue, history, caches)
+history.json
+queue.json
+*.sqlite
+*.sqlite3
+*.db
+*.log
+
+# --- Local tooling / AI agent state ---
+.claude/
+.cursor/
+graphify-out/
+*.local.md
+CLAUDE.local.md
+.superpowers/

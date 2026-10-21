@@ -30,6 +30,10 @@ struct CosmosBrowserView: View {
                 Readout(Duration.seconds($0.format.duration).formatted(.time(pattern: .minuteSecond)))
             }
             .width(60)
+            TableColumn("Agregado", value: \.addedValue) {
+                Readout($0.addedValue.formatted(.dateTime.day().month(.abbreviated).hour().minute()))
+            }
+            .width(min: 90, ideal: 116)
             TableColumn("Tamaño", value: \.fileSize) { Readout($0.fileSize.formatted(.byteCount(style: .file))) }
                 .width(70)
             TableColumn("✓") { item in

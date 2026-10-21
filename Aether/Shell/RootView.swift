@@ -1,8 +1,8 @@
+import AppKit
 import SwiftUI
 
 struct RootView: View {
     @Environment(AppModel.self) private var model
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         @Bindable var model = model
@@ -19,13 +19,10 @@ struct RootView: View {
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             TransportBar()
-                .transition(.asymmetric(
-                    insertion: reduceMotion ? .opacity : .opacity.combined(with: .offset(y: 8)),
-                    removal: .opacity.animation(.easeOut(duration: 0.12))))
         }
-        .animation(reduceMotion ? .easeOut(duration: 0.15) : Tokens.Motion.enter, value: model.player.current?.url)
         .onKeyPress(.space) {
-            // Text fields consume space first, so this only fires from tables/lists/background.
+            // Toolbar text fields sit outside this view's responder chain, so check the first responder explicitly.
+            if NSApp.keyWindow?.firstResponder is NSTextView { return .ignored }
             model.player.toggle()
             return .handled
         }
@@ -34,6 +31,7 @@ struct RootView: View {
         .onChange(of: model.route, initial: true) { _, route in
             switch route {
             case .cosmosAll, .cosmosFolder, .cosmosInbox, .cosmosReview: model.cosmos.scope = route
+            case .harvesterSearch: model.harvester.applyDeferredLookup()
             default: break
             }
         }

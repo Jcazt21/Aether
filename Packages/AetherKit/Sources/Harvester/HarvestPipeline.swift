@@ -109,7 +109,11 @@ public struct HarvestPipeline: Sendable {
         // 4. Finalize — stamp verification (in place, inside padding) and move atomically.
         try FlacTags.write(tags, to: part, extraFields: TagBuilder.replayGainFields(info).merging(
             [IntegrityVerifier.verifiedFieldKey: IntegrityVerifier.verifiedFieldValue(report, at: now())]) { $1 })
-        let base = FileNaming.baseName(artist: track.primaryArtistName, title: track.displayTitle, fallback: "tidal-\(track.id)")
+        let base = FileNaming.render(template: request.filenameTemplate ?? FileNaming.defaultTemplate,
+                                     discNumber: track.volumeNumber, trackNumber: track.trackNumber,
+                                     artist: track.primaryArtistName, title: track.displayTitle,
+                                     album: track.album?.title)
+            ?? FileNaming.baseName(artist: track.primaryArtistName, title: track.displayTitle, fallback: "tidal-\(track.id)")
         let final = try Self.moveToUniqueName(part, folder: request.destinationFolder, baseName: base)
 
         let si = config.streamInfo

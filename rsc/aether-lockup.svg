@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 480" role="img" aria-labelledby="title desc">
+  <title id="title">Aether celestial wordmark</title>
+  <desc id="desc">A celestial Aether symbol and Lavish wordmark inspired by Greek mythology.</desc>
+  <rect width="1600" height="480" rx="96" fill="#0C0C0E"/>
+  <g transform="translate(60 59) scale(.3535)">
+    <g fill="none" stroke-linecap="round">
+      <path d="M294 722C207 539 276 320 450 238C624 156 829 239 858 438" stroke="#A8ADB5" stroke-width="14"/>
+      <path d="M778 682C692 787 531 827 396 752" stroke="#A8ADB5" stroke-width="14"/>
+      <path d="M260 534C244 369 354 227 512 201C630 182 741 239 797 347" stroke="#F3F7FF" stroke-width="6"/>
+    </g>
+    <path d="M512 168L525 201L558 214L525 227L512 260L499 227L466 214L499 201Z" fill="#8CAEFF"/>
+    <circle cx="814" cy="398" r="17" fill="#A8ADB5"/>
+    <text x="512" y="742" fill="#F3F7FF" font-family="Lavish, SF Pro Display, Inter, Avenir Next, Helvetica Neue, Arial, sans-serif" font-size="620" font-weight="400" text-anchor="middle">A</text>
+  </g>
+  <text x="470" y="309" fill="#F3F7FF" font-family="Lavish, SF Pro Display, Inter, Avenir Next, Helvetica Neue, Arial, sans-serif" font-size="245" font-weight="400" letter-spacing="-2">Aether</text>
+</svg>

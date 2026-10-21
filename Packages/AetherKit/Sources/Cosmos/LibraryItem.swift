@@ -10,9 +10,11 @@ public struct LibraryItem: Codable, Sendable, Identifiable, Equatable {
     public var tags: TrackTags
     public var hasArtwork: Bool
     public var verifiedStamp: String?
+    /// When the file entered its folder (Finder's "Date Added"). Optional so older index caches still decode.
+    public var added: Date?
 
     public init(relativePath: String, fileSize: Int64, modified: Date, format: AudioFormatInfo, tags: TrackTags,
-                hasArtwork: Bool, verifiedStamp: String?) {
+                hasArtwork: Bool, verifiedStamp: String?, added: Date? = nil) {
         self.relativePath = relativePath
         self.fileSize = fileSize
         self.modified = modified
@@ -20,6 +22,7 @@ public struct LibraryItem: Codable, Sendable, Identifiable, Equatable {
         self.tags = tags
         self.hasArtwork = hasArtwork
         self.verifiedStamp = verifiedStamp
+        self.added = added
     }
 
     public var id: String { relativePath }
@@ -42,6 +45,7 @@ public struct LibraryItem: Codable, Sendable, Identifiable, Equatable {
     public var keyValue: String { tags.key ?? "" }
     public var genreValue: String { tags.genre ?? "" }
     public var durationValue: Double { format.duration }
+    public var addedValue: Date { added ?? modified }
     public var isVerified: Bool { verifiedStamp != nil }
 
     public func url(in root: URL) -> URL { root.appending(path: relativePath) }

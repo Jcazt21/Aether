@@ -10,25 +10,46 @@ final class NowPlayingBridge {
 
     init(player: PlayerModel) {
         self.player = player
+        Self.registerCommands(for: self)
+    }
+
+    private enum Command: Sendable { case toggle, play, pause, next, previous, seek(Double) }
+
+    /// MediaPlayer invokes these handlers on its own queue. They must be built in a nonisolated context
+    /// (closures made inside a @MainActor method inherit main-actor isolation and trap when called off-main).
+    private nonisolated static func registerCommands(for bridge: NowPlayingBridge) {
         let center = MPRemoteCommandCenter.shared()
-        center.togglePlayPauseCommand.addTarget { [weak self] _ in self?.player.toggle(); return .success }
-        center.playCommand.addTarget { [weak self] _ in
-            guard let self, self.player.state != .playing else { return .success }
-            self.player.toggle()
-            return .success
+        func add(_ command: MPRemoteCommand, _ make: @escaping @Sendable (MPRemoteCommandEvent) -> Command?) {
+            command.addTarget { [weak bridge] event in
+                guard let cmd = make(event) else { return .commandFailed }
+                Task { @MainActor in bridge?.handle(cmd) }
+                return .success
+            }
         }
-        center.pauseCommand.addTarget { [weak self] _ in
-            guard let self, self.player.state == .playing else { return .success }
-            self.player.toggle()
-            return .success
+        add(center.togglePlayPauseCommand) { _ in .toggle }
+        add(center.playCommand) { _ in .play }
+        add(center.pauseCommand) { _ in .pause }
+        add(center.nextTrackCommand) { _ in .next }
+        add(center.previousTrackCommand) { _ in .previous }
+        add(center.changePlaybackPositionCommand) { event in
+            (event as? MPChangePlaybackPositionCommandEvent).map { .seek($0.positionTime) }
         }
-        center.nextTrackCommand.addTarget { [weak self] _ in self?.player.next(); return .success }
-        center.previousTrackCommand.addTarget { [weak self] _ in self?.player.previous(); return .success }
-        center.changePlaybackPositionCommand.addTarget { [weak self] event in
-            guard let self, let e = event as? MPChangePlaybackPositionCommandEvent, self.player.duration > 0 else { return .commandFailed }
-            self.player.seek(toFraction: e.positionTime / self.player.duration)
-            return .success
+    }
+
+    private func handle(_ command: Command) {
+        switch command {
+        case .toggle: player.toggle()
+        case .play: if player.state != .playing { player.toggle() }
+        case .pause: if player.state == .playing { player.toggle() }
+        case .next: player.next()
+        case .previous: player.previous()
+        case .seek(let position): if player.duration > 0 { player.seek(toFraction: position / player.duration) }
         }
+    }
+
+    private nonisolated static func artwork(_ cg: CGImage) -> MPMediaItemArtwork {
+        let size = NSSize(width: cg.width, height: cg.height)
+        return MPMediaItemArtwork(boundsSize: size) { _ in NSImage(cgImage: cg, size: size) }
     }
 
     func update() {
@@ -47,9 +68,7 @@ final class NowPlayingBridge {
         ]
         if let album = now.album { info[MPMediaItemPropertyAlbumTitle] = album }
         if let cg = now.artwork {
-            let size = NSSize(width: cg.width, height: cg.height)
-            // Capture the Sendable CGImage, build the NSImage inside the (Sendable) request handler.
-            info[MPMediaItemPropertyArtwork] = MPMediaItemArtwork(boundsSize: size) { _ in NSImage(cgImage: cg, size: size) }
+            info[MPMediaItemPropertyArtwork] = Self.artwork(cg)
         }
         center.nowPlayingInfo = info
         center.playbackState = player.state == .playing ? .playing : .paused

@@ -23,8 +23,11 @@ public struct HarvestRequest: Codable, Sendable, Hashable, Identifiable {
     public var genre: String?
     public var policy: QualityPolicy
     public var createdAt: Date
+    public var filenameTemplate: String?
 
-    public init(track: TidalTrack, destinationFolder: URL, genre: String?, policy: QualityPolicy) {
+    public init(track: TidalTrack, destinationFolder: URL, genre: String?, policy: QualityPolicy,
+                filenameTemplate: String? = nil) {
+        self.filenameTemplate = filenameTemplate
         id = UUID()
         self.track = track
         self.destinationFolder = destinationFolder

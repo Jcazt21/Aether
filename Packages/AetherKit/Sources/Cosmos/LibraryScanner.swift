@@ -17,6 +17,7 @@ public enum LibraryScanner {
         let relativePath: String
         let size: Int64
         let modified: Date
+        let added: Date
     }
 
     /// Stat-only pass decides what to re-read; only new/changed files are parsed, with bounded concurrency.
@@ -29,7 +30,8 @@ public enum LibraryScanner {
         var items: [LibraryItem] = []
         var pending: [Entry] = []
         for entry in entries {
-            if let old = previous[entry.relativePath], old.fileSize == entry.size, old.modified == entry.modified {
+            if var old = previous[entry.relativePath], old.fileSize == entry.size, old.modified == entry.modified {
+                old.added = entry.added
                 items.append(old)
             } else {
                 pending.append(entry)
@@ -44,7 +46,9 @@ public enum LibraryScanner {
                 guard let entry = iterator.next() else { return }
                 group.addTask {
                     (entry.relativePath, Result {
-                        try ItemReader.read(url: entry.url, relativePath: entry.relativePath, fileSize: entry.size, modified: entry.modified)
+                        var item = try ItemReader.read(url: entry.url, relativePath: entry.relativePath, fileSize: entry.size, modified: entry.modified)
+                        item.added = entry.added
+                        return item
                     })
                 }
             }
@@ -65,7 +69,7 @@ public enum LibraryScanner {
     private static func list(root: URL) -> ([Entry], [String]) {
         let resolvedRoot = root.resolvingSymlinksInPath()
         let rootPath = resolvedRoot.path(percentEncoded: false).replacing(/\/+$/, with: "")
-        let keys: [URLResourceKey] = [.isRegularFileKey, .isDirectoryKey, .fileSizeKey, .contentModificationDateKey]
+        let keys: [URLResourceKey] = [.isRegularFileKey, .isDirectoryKey, .fileSizeKey, .contentModificationDateKey, .addedToDirectoryDateKey]
         guard let enumerator = FileManager.default.enumerator(at: resolvedRoot, includingPropertiesForKeys: keys,
                                                               options: [.skipsHiddenFiles, .skipsPackageDescendants])
         else { return ([], []) }
@@ -82,7 +86,8 @@ public enum LibraryScanner {
             }
             guard values.isRegularFile == true, TagIO.supportedExtensions.contains(url.pathExtension.lowercased()) else { continue }
             entries.append(Entry(url: url, relativePath: relative, size: Int64(values.fileSize ?? 0),
-                                 modified: values.contentModificationDate ?? .distantPast))
+                                 modified: values.contentModificationDate ?? .distantPast,
+                                 added: values.addedToDirectoryDate ?? values.contentModificationDate ?? .distantPast))
         }
         folders.sort { $0.localizedStandardCompare($1) == .orderedAscending }
         return (entries, folders)

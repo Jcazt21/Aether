@@ -18,7 +18,11 @@ final class AppModel {
         // Owned by the model, not a view: downloads and the folder watcher keep running with the window closed.
         Task { [harvester] in await harvester.start() }
         Task { [cosmos] in await cosmos.start() }
-        cosmos.onLookupChanged = { [harvester] lookup in harvester.masterLookup = lookup }
+        // Rescans land ~1 s after a download. Applying the new lookup while the search Table is being torn down
+        // (user switches screen) updates a dead row view and traps in AttributeGraph, so defer it while hidden.
+        cosmos.onLookupChanged = { [harvester, weak self] lookup in
+            if self?.route == .harvesterSearch { harvester.masterLookup = lookup } else { harvester.deferredLookup = lookup }
+        }
         cosmos.onRelocated = { [harvester] moves in Task { await harvester.relocate(moves) } }
     }
 }

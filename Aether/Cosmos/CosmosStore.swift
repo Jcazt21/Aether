@@ -18,7 +18,13 @@ final class CosmosStore {
     private(set) var duplicateGroups: [DuplicateGroup] = []
     private(set) var lookup: MasterLookup = .empty
     private(set) var isScanning = false
-    var scope: Route = .cosmosAll { didSet { if scope != oldValue { refreshVisible() } } }
+    var scope: Route = .cosmosAll {
+        didSet {
+            guard scope != oldValue else { return }
+            applyDefaultSort(from: oldValue)
+            refreshVisible()
+        }
+    }
     var searchText = "" { didSet { refreshVisible() } }
     var sortOrder = [KeyPathComparator(\LibraryItem.displayArtist)] { didSet { refreshVisible() } }
     var selection: Set<String> = []
@@ -101,6 +107,16 @@ final class CosmosStore {
     }
 
     // MARK: Derived state
+
+    /// Inbox opens newest-first (what was just downloaded); leaving it restores the artist sort if the user didn't change it.
+    private func applyDefaultSort(from old: Route) {
+        let newestFirst = [KeyPathComparator(\LibraryItem.addedValue, order: .reverse)]
+        if scope == .cosmosInbox {
+            sortOrder = newestFirst
+        } else if old == .cosmosInbox, sortOrder == newestFirst {
+            sortOrder = [KeyPathComparator(\LibraryItem.displayArtist)]
+        }
+    }
 
     private func recompute() {
         duplicateGroups = DuplicateDetector.groups(in: items)
