@@ -254,17 +254,25 @@ final class HarvesterStore {
     }
 }
 
-/// Album metadata is shared by every track of an album: fetch once.
-private actor AlbumCache {
-    private let client: HiFiClient
+/// Album metadata is shared by every track of an album: fetch once, even across concurrent downloads.
+actor AlbumCache {
+    private let fetch: @Sendable (Int) async -> TidalAlbum?
     private var cache: [Int: TidalAlbum] = [:]
 
-    init(client: HiFiClient) { self.client = client }
+    init(client: HiFiClient) { fetch = { id in try? await client.album(id: id).album } }
+    init(fetch: @escaping @Sendable (Int) async -> TidalAlbum?) { self.fetch = fetch }
 
     func album(_ id: Int) async -> TidalAlbum? {
         if let hit = cache[id] { return hit }
-        guard id != 0, let album = try? await client.album(id: id).album else { return nil }
-        cache[id] = album
+        if let existing = inFlight[id] { return await existing.value }
+        let fetch = fetch
+        let task = Task { await fetch(id) }
+        inFlight[id] = task
+        let album = await task.value
+        inFlight[id] = nil
+        if let album { cache[id] = album }
         return album
     }
 }
+    private var inFlight: [Int: Task<TidalAlbum?, Never>] = [:]
+        guard id != 0 else { return nil }

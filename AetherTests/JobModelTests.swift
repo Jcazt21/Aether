@@ -70,4 +70,18 @@ import Testing
         #expect(store.failedCount == 1)
         #expect(store.hasFinishedJobs)
     }
+
+    @Test func albumCacheCoalescesConcurrentRequests() async throws {
+        let calls = OSAllocatedUnfairLock(initialState: 0)
+        let album = try JSONDecoder().decode(TidalAlbum.self, from: Data(#"{"id":42,"title":"Free Your Mind"}"#.utf8))
+        let cache = AlbumCache { id in
+            calls.withLock { $0 += 1 }
+            try? await Task.sleep(for: .milliseconds(40))
+            return id == 42 ? album : nil
+        }
+        async let a = cache.album(42), b = cache.album(42), c = cache.album(42)
+        let results = await [a, b, c]
+        #expect(results.compactMap { $0 }.count == 3)
+        #expect(calls.withLock { $0 } == 1)
+    }
 }
