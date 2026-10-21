@@ -57,6 +57,8 @@ final class PlayerModel {
 
     @ObservationIgnored let engine = PlaybackEngine()
     @ObservationIgnored private let preferences: Preferences
+    @ObservationIgnored private let previewSession = URLSession(configuration: .ephemeral)
+    @ObservationIgnored private var previewTask: Task<Void, Never>?
     @ObservationIgnored private var loadTask: Task<Void, Never>?
     // @Observable does not support `lazy`: assigned once at the end of init.
     @ObservationIgnored private(set) var nowPlaying: NowPlayingBridge!
@@ -79,11 +81,12 @@ final class PlayerModel {
 
     func preview(_ track: TidalTrack, client: HiFiClient) {
         if previewingTrackID == track.id, current != nil { toggle(); return }
+        previewTask?.cancel()
         previewingTrackID = track.id
         isPreparingPreview = true
-        Task {
-            defer { isPreparingPreview = false }
-            let session = URLSession(configuration: .ephemeral)
+        previewTask = Task {
+            defer { if previewingTrackID == track.id { isPreparingPreview = false } }
+            let session = previewSession
             do {
                 let info = try await client.playbackInfo(trackID: track.id, quality: .lossless)
                 let manifest = try info.dashManifest()
@@ -93,9 +96,18 @@ final class PlayerModel {
                 }
                 current = NowPlaying(url: manifest.initializationURL, title: track.displayTitle, artist: track.allArtistNames,
                                      album: track.album?.title, formatLabel: "TIDAL · \(info.bitDepth ?? 16)/44.1 · STREAM", artwork: nil)
+                if let cover = track.album?.cover, let (data, _) = try? await session.data(from: client.coverURL(cover, size: 320)),
+                   previewingTrackID == track.id, let now = current,
+                   let art = await Self.decodeThumbnail(data) {
+                    current = NowPlaying(url: now.url, title: now.title, artist: now.artist, album: now.album,
+                                         formatLabel: now.formatLabel, artwork: art)
+                    nowPlaying.update()
+                }
             } catch {
+                guard !Task.isCancelled else { return }
                 guard let url = try? await previewCache.file(for: track, client: client), previewingTrackID == track.id else { return }
                 play(urls: [url], startAt: 0)
+                previewingTrackID = track.id
             }
         }
     }
@@ -125,6 +137,8 @@ final class PlayerModel {
     }
 
     func shutdown() {
+        loadTask?.cancel()
+        previewTask?.cancel()
         engine.stop()
         engine.restoreDeviceRate()
     }
@@ -132,6 +146,9 @@ final class PlayerModel {
     private func load(_ url: URL?, autoplay: Bool) {
         guard let url else { return }
         loadTask?.cancel()
+        previewTask?.cancel()
+        previewingTrackID = nil
+        isPreparingPreview = false
         engine.bitPerfect = preferences.bitPerfect
         let probe = try? AudioProbe.probe(url)
         do {
@@ -157,6 +174,11 @@ final class PlayerModel {
         let tags = (try? TagIO.read(url)) ?? TrackTags()
         guard !Task.isCancelled else { return (tags, nil) }
         return (tags, tags.artwork.flatMap { ArtworkProcessor.thumbnail($0.data, maxPixel: 128) })
+    }
+
+    @concurrent
+    private nonisolated static func decodeThumbnail(_ data: Data) async -> CGImage? {
+        ArtworkProcessor.thumbnail(data, maxPixel: 128)
     }
 
     private func syncState() {
