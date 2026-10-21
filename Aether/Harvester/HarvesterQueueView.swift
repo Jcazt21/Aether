@@ -8,8 +8,8 @@ struct HarvesterQueueView: View {
     var body: some View {
         Group {
             if store.jobs.isEmpty {
-                ContentUnavailableView("Cola vacía", systemImage: "arrow.down.circle",
-                                       description: Text("Busca en Tidal y pulsa ⌘D para descargar."))
+                ContentUnavailableView("Queue Empty", systemImage: "arrow.down.circle",
+                                       description: Text("Search Tidal and press ⌘D to download."))
             } else {
                 List(store.jobs, selection: $selection) { job in
                     JobRow(job: job)
@@ -18,13 +18,13 @@ struct HarvesterQueueView: View {
                 .scrollContentBackground(.hidden)
             }
         }
-        .navigationTitle("Cola")
-        .navigationSubtitle(store.activeCount > 0 ? "\(store.activeCount) activas" : "")
+        .navigationTitle("Queue")
+        .navigationSubtitle(store.activeCount > 0 ? "\(store.activeCount) active" : "")
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
-                Button { store.retryFailed() } label: { Label("Reintentar fallidas", systemImage: "arrow.clockwise") }
+                Button { store.retryFailed() } label: { Label("Retry Failed", systemImage: "arrow.clockwise") }
                     .disabled(store.failedCount == 0)
-                Button { store.clearFinished() } label: { Label("Limpiar terminadas", systemImage: "checkmark.circle.badge.xmark") }
+                Button { store.clearFinished() } label: { Label("Clear Finished", systemImage: "checkmark.circle.badge.xmark") }
                     .disabled(!store.hasFinishedJobs)
             }
         }

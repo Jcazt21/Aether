@@ -69,7 +69,7 @@ final class CosmosStore {
                 undoManager?.registerUndo(withTarget: store) { s in Task { @MainActor in await s.write(after, to: urls) } }
             }
         }
-        undoManager?.setActionName(items.count == 1 ? "Editar tags" : "Editar tags de \(items.count) pistas")
+        undoManager?.setActionName(items.count == 1 ? "Edit Tags" : "Edit Tags of \(items.count) Tracks")
     }
 
     private func write(_ tags: [TrackTags], to urls: [URL]) async {

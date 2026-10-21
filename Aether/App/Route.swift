@@ -3,8 +3,8 @@ enum ReviewFilter: String, Hashable, CaseIterable {
 
     var title: String {
         switch self {
-        case .untagged: "Sin tags"
-        case .duplicates: "Duplicados"
+        case .untagged: "Untagged"
+        case .duplicates: "Duplicates"
         case .lossy: "Lossy"
         }
     }

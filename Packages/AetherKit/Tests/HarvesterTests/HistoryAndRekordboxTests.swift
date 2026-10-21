@@ -16,9 +16,9 @@ import Testing
     @Test func historyPersistsNewestFirstAndRelocates() async throws {
         let url = FileManager.default.temporaryDirectory.appending(path: "history-\(UUID().uuidString).json")
         let store = HistoryStore(fileURL: url)
-        await store.append(Self.entry("A", path: "/Master/Por clasificar/A.flac", day: 0))
-        await store.append(Self.entry("B", path: "/Master/Por clasificar/B.flac", day: 100))
-        await store.relocate(from: URL(filePath: "/Master/Por clasificar/A.flac"), to: URL(filePath: "/Master/UK House/A.flac"))
+        await store.append(Self.entry("A", path: "/Master/Inbox/A.flac", day: 0))
+        await store.append(Self.entry("B", path: "/Master/Inbox/B.flac", day: 100))
+        await store.relocate(from: URL(filePath: "/Master/Inbox/A.flac"), to: URL(filePath: "/Master/UK House/A.flac"))
         let reloaded = await HistoryStore(fileURL: url).all()
         #expect(reloaded.map(\.title) == ["B", "A"])
         #expect(reloaded[1].fileURL.path == "/Master/UK House/A.flac")

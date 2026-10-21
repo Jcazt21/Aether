@@ -58,7 +58,7 @@ public struct TrackTags: Equatable, Sendable, Codable {
         return copy
     }
 
-    /// "Sin tags" in Cosmos: no usable title or artist.
+    /// "Untagged" in Cosmos: no usable title or artist.
     public var isEffectivelyEmpty: Bool { title?.nilIfBlank == nil || artist?.nilIfBlank == nil }
 
     public static func formatBPM(_ value: Double) -> String {

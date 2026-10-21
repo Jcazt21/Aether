@@ -15,15 +15,15 @@ import Testing
     @Test func filtersByScopeAndSearch() {
         let items = [
             item("UK House/Prospa - Dreams.flac", artist: "Prospa", title: "Dreams"),
-            item("Por clasificar/x.mp3", codec: .mp3),
+            item("Inbox/x.mp3", codec: .mp3),
             item("Tech House/PAWSA - The Groovy Cat.flac", artist: "PAWSA", title: "The Groovy Cat"),
         ]
-        #expect(CosmosStore.filter(items, scope: .cosmosAll, inbox: "Por clasificar", search: "", duplicates: []).count == 3)
-        #expect(CosmosStore.filter(items, scope: .cosmosFolder("UK House"), inbox: "Por clasificar", search: "", duplicates: []).map(\.id) == ["UK House/Prospa - Dreams.flac"])
-        #expect(CosmosStore.filter(items, scope: .cosmosInbox, inbox: "Por clasificar", search: "", duplicates: []).map(\.id) == ["Por clasificar/x.mp3"])
-        #expect(CosmosStore.filter(items, scope: .cosmosReview(.untagged), inbox: "Por clasificar", search: "", duplicates: []).map(\.id) == ["Por clasificar/x.mp3"])
-        #expect(CosmosStore.filter(items, scope: .cosmosReview(.lossy), inbox: "Por clasificar", search: "", duplicates: []).map(\.id) == ["Por clasificar/x.mp3"])
-        #expect(CosmosStore.filter(items, scope: .cosmosReview(.duplicates), inbox: "Por clasificar", search: "", duplicates: ["UK House/Prospa - Dreams.flac"]).count == 1)
-        #expect(CosmosStore.filter(items, scope: .cosmosAll, inbox: "Por clasificar", search: "groovy", duplicates: []).map(\.id) == ["Tech House/PAWSA - The Groovy Cat.flac"])
+        #expect(CosmosStore.filter(items, scope: .cosmosAll, inbox: "Inbox", search: "", duplicates: []).count == 3)
+        #expect(CosmosStore.filter(items, scope: .cosmosFolder("UK House"), inbox: "Inbox", search: "", duplicates: []).map(\.id) == ["UK House/Prospa - Dreams.flac"])
+        #expect(CosmosStore.filter(items, scope: .cosmosInbox, inbox: "Inbox", search: "", duplicates: []).map(\.id) == ["Inbox/x.mp3"])
+        #expect(CosmosStore.filter(items, scope: .cosmosReview(.untagged), inbox: "Inbox", search: "", duplicates: []).map(\.id) == ["Inbox/x.mp3"])
+        #expect(CosmosStore.filter(items, scope: .cosmosReview(.lossy), inbox: "Inbox", search: "", duplicates: []).map(\.id) == ["Inbox/x.mp3"])
+        #expect(CosmosStore.filter(items, scope: .cosmosReview(.duplicates), inbox: "Inbox", search: "", duplicates: ["UK House/Prospa - Dreams.flac"]).count == 1)
+        #expect(CosmosStore.filter(items, scope: .cosmosAll, inbox: "Inbox", search: "groovy", duplicates: []).map(\.id) == ["Tech House/PAWSA - The Groovy Cat.flac"])
     }
 }

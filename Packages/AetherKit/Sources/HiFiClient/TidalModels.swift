@@ -38,7 +38,7 @@ public struct TidalTrack: Codable, Sendable, Hashable, Identifiable {
     public let peak: Double?
 
     public var displayTitle: String { FileNaming.titleWithVersion(title, version: version) }
-    public var primaryArtistName: String { artist?.name ?? artists?.first?.name ?? "Desconocido" }
+    public var primaryArtistName: String { artist?.name ?? artists?.first?.name ?? "Unknown" }
 
     public var allArtistNames: String {
         let main = (artists ?? []).filter { $0.type == nil || $0.type == "MAIN" }.map(\.name)
@@ -68,7 +68,7 @@ public struct TidalAlbum: Codable, Sendable, Hashable, Identifiable {
     public let mediaMetadata: MediaMetadata?
     public let artists: [TidalArtist]?
 
-    public var primaryArtistName: String { artists?.first?.name ?? "Desconocido" }
+    public var primaryArtistName: String { artists?.first?.name ?? "Unknown" }
     public var supportsHiRes: Bool { mediaMetadata?.tags.contains("HIRES_LOSSLESS") ?? false }
     public var year: String? { releaseDate.map { String($0.prefix(4)) } }
 }

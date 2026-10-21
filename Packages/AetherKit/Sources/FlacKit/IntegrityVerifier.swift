@@ -49,15 +49,15 @@ public enum IntegrityVerifier {
             md5Expected: streamInfo.hasMD5 ? streamInfo.md5Hex : nil, md5Actual: nil, failure: nil)
 
         if let bad = scan.firstBadOffset {
-            report.failure = "Frame inválido en el byte \(bad)"
+            report.failure = "Invalid frame at byte \(bad)"
             return report
         }
         if streamInfo.totalSamples != 0, scan.samples != streamInfo.totalSamples {
-            report.failure = "Muestras: \(scan.samples) ≠ STREAMINFO \(streamInfo.totalSamples)"
+            report.failure = "Samples: \(scan.samples) ≠ STREAMINFO \(streamInfo.totalSamples)"
             return report
         }
         if let expected = expectedSamples, scan.samples != expected {
-            report.failure = "Muestras: \(scan.samples) ≠ esperado \(expected)"
+            report.failure = "Samples: \(scan.samples) ≠ expected \(expected)"
             return report
         }
 
@@ -67,12 +67,12 @@ public enum IntegrityVerifier {
         }
         report.md5Actual = digest.md5.map { String(format: "%02x", $0) }.joined()
         if digest.frames != scan.samples {
-            report.failure = "Decodificadas \(digest.frames) ≠ \(scan.samples) muestras"
+            report.failure = "Decoded \(digest.frames) ≠ \(scan.samples) samples"
             return report
         }
         if streamInfo.hasMD5 {
             report.verdict = digest.md5 == streamInfo.md5 ? .verified : .failed
-            if report.verdict == .failed { report.failure = "MD5 no coincide con la fuente" }
+            if report.verdict == .failed { report.failure = "MD5 does not match the source" }
         } else {
             report.verdict = .verifiedNoReference
         }

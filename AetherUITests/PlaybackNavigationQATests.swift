@@ -14,7 +14,7 @@ final class PlaybackNavigationQATests: XCTestCase {
         firstRow.doubleClick()
         sleep(2)
 
-        let items = ["Cola", "Historial", "Por clasificar", "Sin tags", "Duplicados", "Lossy", "Master", "Buscar"]
+        let items = ["Queue", "History", "Inbox", "Untagged", "Duplicates", "Lossy", "Master", "Search"]
         for round in 1...3 {
             for name in items {
                 let item = app.staticTexts[name]

@@ -5,7 +5,7 @@ final class AetherUITests: XCTestCase {
     func testLaunchShowsSidebarSections() {
         let app = XCUIApplication()
         app.launch()
-        XCTAssertTrue(app.staticTexts["Buscar"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Search"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Master"].exists)
     }
 
@@ -14,7 +14,7 @@ final class AetherUITests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
         app.typeKey("2", modifierFlags: .command)
-        XCTAssertTrue(app.staticTexts["Cola vacía"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Queue Empty"].waitForExistence(timeout: 5))
     }
 
     @MainActor

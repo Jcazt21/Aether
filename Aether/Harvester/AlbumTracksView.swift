@@ -17,7 +17,7 @@ struct AlbumTracksView: View {
                     Button {
                         store.requestEnqueue(selection.isEmpty ? tracks : tracks.filter { selection.contains($0.id) })
                     } label: {
-                        Label(selection.isEmpty ? "Descargar álbum" : "Descargar selección", systemImage: "arrow.down.circle")
+                        Label(selection.isEmpty ? "Download Album" : "Download Selection", systemImage: "arrow.down.circle")
                     }
                     .disabled(tracks.isEmpty)
                 }

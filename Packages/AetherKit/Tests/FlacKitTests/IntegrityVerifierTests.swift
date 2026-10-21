@@ -35,7 +35,7 @@ import TestSupport
         try FlacMetadataIO.write(header.blocks, to: url)
         let report = try IntegrityVerifier.verify(flacAt: url)
         #expect(report.verdict == .failed)
-        #expect(report.failure == "MD5 no coincide con la fuente")
+        #expect(report.failure == "MD5 does not match the source")
     }
 
     @Test func failsOnSampleCountMismatchBeforeDecoding() throws {
@@ -43,7 +43,7 @@ import TestSupport
         let report = try IntegrityVerifier.verify(flacAt: url, expectedSamples: UInt64(pcm.count / 6) + 1)
         #expect(report.verdict == .failed)
         #expect(report.md5Actual == nil)
-        #expect(report.failure?.hasPrefix("Muestras") == true)
+        #expect(report.failure?.hasPrefix("Samples") == true)
     }
 
     @Test func noReferenceWhenStreamInfoMD5IsZero() throws {

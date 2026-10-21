@@ -28,8 +28,8 @@ struct ArtworkWell: View {
             return true
         } isTargeted: { isTargeted = $0 }
         .contextMenu {
-            Button("Elegir imagen…") { isImporting = true }
-            Button("Quitar portada", role: .destructive) { draft.artwork = .removed }
+            Button("Choose Image…") { isImporting = true }
+            Button("Remove Artwork", role: .destructive) { draft.artwork = .removed }
         }
         .fileImporter(isPresented: $isImporting, allowedContentTypes: [.image]) { result in
             if case .success(let url) = result, let data = try? Data(contentsOf: url), let art = ArtworkProcessor.prepare(data) {
@@ -44,7 +44,7 @@ struct ArtworkWell: View {
             }
             image = await Task.detached(priority: .userInitiated) { data.flatMap { ArtworkProcessor.thumbnail($0, maxPixel: 360) } }.value
         }
-        .accessibilityLabel("Portada")
+        .accessibilityLabel("Artwork")
     }
 
     private var artworkIdentity: Int {

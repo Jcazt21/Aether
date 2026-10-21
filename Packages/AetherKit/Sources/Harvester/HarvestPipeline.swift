@@ -104,7 +104,7 @@ public struct HarvestPipeline: Sendable {
             if verifyThrottle.shouldEmit() { emit(.verifying(fraction)) }
         }
         Self.signposter.endInterval("verify", verifyInterval)
-        guard report.verdict == .verified else { throw HarvestError.integrity(report.failure ?? "Integridad") }
+        guard report.verdict == .verified else { throw HarvestError.integrity(report.failure ?? "Integrity") }
 
         // 4. Finalize — stamp verification (in place, inside padding) and move atomically.
         try FlacTags.write(tags, to: part, extraFields: TagBuilder.replayGainFields(info).merging(

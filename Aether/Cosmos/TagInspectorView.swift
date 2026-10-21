@@ -14,7 +14,7 @@ struct TagInspectorView: View {
     var body: some View {
         Group {
             if items.isEmpty {
-                ContentUnavailableView("Sin selección", systemImage: "tag", description: Text("Selecciona una o varias pistas."))
+                ContentUnavailableView("No Selection", systemImage: "tag", description: Text("Select one or more tracks."))
             } else if let draft {
                 form(draft)
             } else {
@@ -34,21 +34,21 @@ struct TagInspectorView: View {
             Section {
                 HStack { Spacer(); ArtworkWell(draft: draft); Spacer() }
                 if items.contains(where: { !TagIO.isWritable(store.url(for: $0)) }) {
-                    Label("Algunos archivos son de solo lectura (M4A).", systemImage: "lock")
+                    Label("Some files are read-only (M4A).", systemImage: "lock")
                         .font(.callout).foregroundStyle(.secondary)
                 }
             }
-            section("Pista", [.title, .artist, .remixer], draft)
-            section("Lanzamiento", [.album, .albumArtist, .label, .year, .isrc], draft)
+            section("Track", [.title, .artist, .remixer], draft)
+            section("Release", [.album, .albumArtist, .label, .year, .isrc], draft)
             section("DJ", [.genre, .bpm, .key, .comment], draft)
             if items.count == 1, let item = items.first { technical(item) }
         }
         .formStyle(.grouped)
         .toolbar {
             ToolbarItemGroup(placement: .confirmationAction) {
-                Button("Revertir") { self.draft = nil; Task { self.draft = TagDraft(tags: await store.loadFullTags(items)) } }
+                Button("Revert") { self.draft = nil; Task { self.draft = TagDraft(tags: await store.loadFullTags(items)) } }
                     .disabled(!draft.hasChanges || isSaving)
-                Button("Guardar") {
+                Button("Save") {
                     isSaving = true
                     Task {
                         await store.saveTags(draft, for: items, undoManager: undoManager)
@@ -65,7 +65,7 @@ struct TagInspectorView: View {
     private func section(_ title: LocalizedStringKey, _ fields: [TagField], _ draft: TagDraft) -> some View {
         Section {
             ForEach(fields) { field in
-                TextField(field.label, text: draft.binding(field), prompt: draft.mixed.contains(field) ? Text("Varios") : nil)
+                TextField(field.label, text: draft.binding(field), prompt: draft.mixed.contains(field) ? Text("Various") : nil)
                     .font(field.isNumeric || field == .isrc || field == .key ? .readout : .body)
             }
         } header: { SectionLabel(title) }
@@ -73,14 +73,14 @@ struct TagInspectorView: View {
 
     private func technical(_ item: LibraryItem) -> some View {
         Section {
-            LabeledContent("Formato") { Readout(item.format.label, tone: .primary) }
-            LabeledContent("Canales") { Readout("\(item.format.channels)") }
-            LabeledContent("Tamaño") { Readout(item.fileSize.formatted(.byteCount(style: .file))) }
-            LabeledContent("Integridad") {
-                Readout(item.verifiedStamp.map { "VERIFICADO · \($0.dropFirst(4).prefix(8))…" } ?? "Sin verificar",
+            LabeledContent("Format") { Readout(item.format.label, tone: .primary) }
+            LabeledContent("Channels") { Readout("\(item.format.channels)") }
+            LabeledContent("Size") { Readout(item.fileSize.formatted(.byteCount(style: .file))) }
+            LabeledContent("Integrity") {
+                Readout(item.verifiedStamp.map { "VERIFIED · \($0.dropFirst(4).prefix(8))…" } ?? "Unverified",
                         tone: item.isVerified ? .signal : .tertiary)
             }
-            LabeledContent("Ruta") { Readout(item.relativePath) }
-        } header: { SectionLabel("Técnico") }
+            LabeledContent("Path") { Readout(item.relativePath) }
+        } header: { SectionLabel("Technical") }
     }
 }

@@ -7,7 +7,7 @@ struct MoveToMenu: View {
     @Environment(\.undoManager) private var undoManager
 
     var body: some View {
-        Menu("Mover a") {
+        Menu("Move to") {
             ForEach(store.folders) { folder in
                 Button(folder.name) { Task { await store.move(items, toFolder: folder.name, undoManager: undoManager) } }
                     .disabled(items.allSatisfy { $0.folder == folder.name })

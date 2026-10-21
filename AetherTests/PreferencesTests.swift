@@ -14,8 +14,8 @@ import Testing
     @Test func defaultsMatchSpec() {
         let p = Preferences(defaults: freshDefaults())
         #expect(p.masterFolder == URL.homeDirectory.appending(path: "Master"))
-        #expect(p.inboxFolderName == "Por clasificar")
-        #expect(p.inboxFolder == URL.homeDirectory.appending(path: "Master/Por clasificar"))
+        #expect(p.inboxFolderName == "Inbox")
+        #expect(p.inboxFolder == URL.homeDirectory.appending(path: "Master/Inbox"))
         #expect(p.hifiBaseURL == URL(string: "http://127.0.0.1:8000")!)
         #expect(p.qualityPolicyRaw == "hiResCapped96")
         #expect(p.maxConcurrentDownloads == 3)

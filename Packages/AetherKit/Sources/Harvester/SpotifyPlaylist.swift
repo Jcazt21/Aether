@@ -62,7 +62,7 @@ public enum SpotifyImport {
             return SpotifyTrack(title: title, artists: artists.trimmingCharacters(in: .whitespaces))
         }
         guard !tracks.isEmpty else { throw SpotifyError.unreadable }
-        return SpotifyPlaylist(name: (entity["name"] as? String) ?? (entity["title"] as? String) ?? "Playlist de Spotify", tracks: tracks)
+        return SpotifyPlaylist(name: (entity["name"] as? String) ?? (entity["title"] as? String) ?? "Spotify playlist", tracks: tracks)
     }
 
     private static func find(in node: Any, where predicate: ([String: Any]) -> Bool) -> [String: Any]? {

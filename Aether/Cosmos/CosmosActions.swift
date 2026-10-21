@@ -12,7 +12,7 @@ extension CosmosStore {
     func moveURLs(_ urls: [URL], toFolder folder: String, undoManager: UndoManager?) async {
         let target = root.appending(path: folder, directoryHint: .isDirectory)
         guard let moves = try? await Task.detached(operation: { try Organizer.move(urls, to: target) }).value, !moves.isEmpty else { return }
-        await record(moves, reason: "move", actionName: "Mover a \(folder)", undoManager: undoManager)
+        await record(moves, reason: "move", actionName: "Move to \(folder)", undoManager: undoManager)
     }
 
     func plannedRenames(for items: [LibraryItem]) async -> [FileMove] {
@@ -23,7 +23,7 @@ extension CosmosStore {
 
     func applyRenames(_ moves: [FileMove], undoManager: UndoManager?) async {
         guard let applied = try? await Task.detached(operation: { try Organizer.apply(moves) }).value else { return }
-        await record(applied, reason: "rename", actionName: "Renombrar desde tags", undoManager: undoManager)
+        await record(applied, reason: "rename", actionName: "Rename from Tags", undoManager: undoManager)
     }
 
     func trash(_ items: [LibraryItem], undoManager: UndoManager?) async {
@@ -35,7 +35,7 @@ extension CosmosStore {
             }
         }
         guard !moves.isEmpty else { return }
-        await record(moves, reason: "trash", actionName: "Mover a la Papelera", undoManager: undoManager)
+        await record(moves, reason: "trash", actionName: "Move to Trash", undoManager: undoManager)
     }
 
     /// Re-verifies FLACs against their STREAMINFO MD5; stamps AETHER_VERIFIED when the file proves bit-perfect.

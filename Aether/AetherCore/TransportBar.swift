@@ -13,10 +13,10 @@ struct TransportBar: View {
             GlassEffectContainer(spacing: Tokens.Space.s) {
                 HStack(spacing: Tokens.Space.l) {
                     HStack(spacing: Tokens.Space.xs) {
-                        transportButton("backward.fill", "Anterior") { player.previous() }
+                        transportButton("backward.fill", "Previous") { player.previous() }
                         transportButton(player.state == .playing ? "pause.fill" : "play.fill",
-                                        player.state == .playing ? "Pausa" : "Reproducir", large: true) { player.toggle() }
-                        transportButton("forward.fill", "Siguiente") { player.next() }
+                                        player.state == .playing ? "Pause" : "Play", large: true) { player.toggle() }
+                        transportButton("forward.fill", "Next") { player.next() }
                     }
 
                     ZStack {
@@ -47,7 +47,7 @@ struct TransportBar: View {
                                 tone: player.signal?.isBitPerfect == true ? .signal : .secondary)
                     }
                     .buttonStyle(.borderless)
-                    .help("Cadena de señal")
+                    .help("Signal path")
                     .popover(isPresented: $showSignal, arrowEdge: .top) { SignalPopover() }
                 }
                 .padding(.horizontal, Tokens.Space.l)
@@ -117,7 +117,7 @@ private struct ProgressLine: View {
         .accessibilityRepresentation {
             Slider(value: Binding(get: { player.duration > 0 ? player.currentTime / player.duration : 0 },
                                   set: { player.seek(toFraction: $0) }))
-                .accessibilityLabel("Posición")
+                .accessibilityLabel("Position")
                 .accessibilityHidden(expanded)
         }
     }

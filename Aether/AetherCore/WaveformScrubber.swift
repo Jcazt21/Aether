@@ -31,8 +31,8 @@ struct WaveformScrubber: View {
                 Readout("-" + format(max(duration - player.currentTime, 0)))
             }
             .accessibilityElement()
-            .accessibilityLabel("Posición")
-            .accessibilityValue("\(format(player.currentTime)) de \(format(duration))")
+            .accessibilityLabel("Position")
+            .accessibilityValue("\(format(player.currentTime)) of \(format(duration))")
             .accessibilityAdjustableAction { direction in
                 player.skip(by: direction == .increment ? 10 : -10)
             }

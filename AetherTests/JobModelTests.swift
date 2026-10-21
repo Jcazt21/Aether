@@ -18,7 +18,7 @@ import Testing
         let job = try job()
         #expect(job.title == "Dreams (Extended Mix)")
         #expect(job.subtitle == "Prospa · Free Your Mind")
-        #expect(job.readout == "EN COLA")
+        #expect(job.readout == "QUEUED")
         #expect(job.stage == .idle)
 
         job.phase = .downloading(segment: 30, of: 60, bytes: 20_000_000, bytesPerSecond: 6_100_000)
@@ -30,7 +30,7 @@ import Testing
         job.phase = .verifying(0.62)
         #expect(job.stage == .verifying)
         #expect(job.transferFraction == 1)
-        #expect(job.readout == "VERIFICANDO · MD5 62 %")
+        #expect(job.readout == "VERIFYING · MD5 62 %")
 
         let report = IntegrityReport(verdict: .verified, frames: 1, samples: 1, expectedSamples: nil,
                                      md5Expected: "ee68086136375cebd3f65e8ead407a1f", md5Actual: "ee68086136375cebd3f65e8ead407a1f", failure: nil)
@@ -38,7 +38,7 @@ import Testing
                                             format: FormatSummary(sampleRate: 44_100, bitDepth: 24, channels: 2, duration: 236),
                                             bytes: 41_000_000, finishedAt: .now))
         #expect(job.status == .verified)
-        #expect(job.readout == "FLAC · 24/44.1 · VERIFICADO ee68…7a1f")
+        #expect(job.readout == "FLAC · 24/44.1 · VERIFIED ee68…7a1f")
         #expect(job.readoutTone == .signal)
 
         job.phase = .failed("Integridad: MD5 no coincide con la fuente")

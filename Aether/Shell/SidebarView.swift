@@ -10,15 +10,15 @@ struct SidebarView: View {
     var body: some View {
         List(selection: Binding<Route?>(get: { route }, set: { if let new = $0 { route = new } })) {
             Section("Hermes") {
-                Label("Buscar", systemImage: "magnifyingglass").tag(Route.harvesterSearch)
-                Label("Cola", systemImage: "arrow.down.circle")
+                Label("Search", systemImage: "magnifyingglass").tag(Route.harvesterSearch)
+                Label("Queue", systemImage: "arrow.down.circle")
                     .badge(harvester.activeCount)
                     .tag(Route.harvesterQueue)
-                Label("Historial", systemImage: "clock").tag(Route.harvesterHistory)
+                Label("History", systemImage: "clock").tag(Route.harvesterHistory)
             }
             Section("Cosmos") {
                 Label("Master", systemImage: "folder").tag(Route.cosmosAll)
-                Label("Por clasificar", systemImage: "tray")
+                Label("Inbox", systemImage: "tray")
                     .badge(cosmos.inboxCount)
                     .tag(Route.cosmosInbox)
                     .dropDestination(for: URL.self) { urls, _ in
@@ -34,7 +34,7 @@ struct SidebarView: View {
                         }
                 }
             }
-            Section("Revisar") {
+            Section("Review") {
                 ForEach(ReviewFilter.allCases, id: \.self) { filter in
                     Label(filter.title, systemImage: filter.symbol)
                         .badge(count(for: filter))

@@ -9,8 +9,8 @@ struct RenamePreviewSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Tokens.Space.m) {
-            Text("Renombrar desde tags").font(.headline)
-            Text("Formato: Artista - Título. Los archivos sin título o artista no se tocan.")
+            Text("Rename from Tags").font(.headline)
+            Text("Format: Artist - Title. Files without a title or artist are left alone.")
                 .font(.callout).foregroundStyle(.secondary)
             List(plan, id: \.from) { move in
                 VStack(alignment: .leading, spacing: 2) {
@@ -21,8 +21,8 @@ struct RenamePreviewSheet: View {
             .frame(minHeight: 240)
             HStack {
                 Spacer()
-                Button("Cancelar", role: .cancel) { dismiss() }.keyboardShortcut(.cancelAction)
-                Button("Renombrar \(plan.count)") {
+                Button("Cancel", role: .cancel) { dismiss() }.keyboardShortcut(.cancelAction)
+                Button("Rename \(plan.count)") {
                     Task { await store.applyRenames(plan, undoManager: undoManager); dismiss() }
                 }
                 .keyboardShortcut(.defaultAction)

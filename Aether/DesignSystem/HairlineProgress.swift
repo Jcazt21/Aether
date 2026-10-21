@@ -31,17 +31,17 @@ struct HairlineProgress: View {
         .frame(height: 2)
         .animation(Tokens.Motion.state, value: stage)
         .accessibilityElement()
-        .accessibilityLabel("Progreso")
+        .accessibilityLabel("Progress")
         .accessibilityValue(accessibilityValue)
     }
 
     private var accessibilityValue: Text {
         switch stage {
-        case .idle: Text("En cola")
-        case .transferring: Text("Descargando \(Int(transfer * 100)) por ciento")
-        case .verifying: Text("Verificando \(Int(verify * 100)) por ciento")
-        case .verified: Text("Verificado")
-        case .failed: Text("Falló")
+        case .idle: Text("Queued")
+        case .transferring: Text("Downloading \(Int(transfer * 100)) percent")
+        case .verifying: Text("Verifying \(Int(verify * 100)) percent")
+        case .verified: Text("Verified")
+        case .failed: Text("Failed")
         }
     }
 }

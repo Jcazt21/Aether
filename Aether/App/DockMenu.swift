@@ -7,11 +7,11 @@ final class DockMenuBuilder {
 
     func menu() -> NSMenu {
         let menu = NSMenu()
-        let toggle = NSMenuItem(title: player?.state == .playing ? "Pausa" : "Reproducir",
+        let toggle = NSMenuItem(title: player?.state == .playing ? "Pause" : "Play",
                                 action: #selector(togglePlayback), keyEquivalent: "")
         toggle.target = self
         menu.addItem(toggle)
-        let next = NSMenuItem(title: "Siguiente", action: #selector(nextTrack), keyEquivalent: "")
+        let next = NSMenuItem(title: "Next", action: #selector(nextTrack), keyEquivalent: "")
         next.target = self
         menu.addItem(next)
         return menu

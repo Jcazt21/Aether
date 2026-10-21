@@ -10,8 +10,8 @@ public enum QualityPolicy: String, Codable, Sendable, CaseIterable {
     public var title: String {
         switch self {
         case .hiResCapped96: "Hi-Res ≤ 96 kHz (CDJ)"
-        case .hiRes: "Hi-Res máximo"
-        case .lossless: "Siempre 16 bit / 44.1 kHz"
+        case .hiRes: "Hi-Res maximum"
+        case .lossless: "Always 16 bit / 44.1 kHz"
         }
     }
 }

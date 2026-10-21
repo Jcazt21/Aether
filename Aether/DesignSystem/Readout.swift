@@ -46,10 +46,10 @@ struct SectionLabel: View {
 
 #Preview {
     VStack(alignment: .leading, spacing: 8) {
-        SectionLabel("Señal")
+        SectionLabel("Signal")
         Readout("FLAC · 24 bit · 44.1 kHz", tone: .primary)
-        Readout("VERIFICADO · ee68…7a1f", tone: .signal)
-        Readout("CRC frame 1 204 inválido", tone: .fault)
+        Readout("VERIFIED · ee68…7a1f", tone: .signal)
+        Readout("CRC frame 1 204 invalid", tone: .fault)
     }
     .padding()
     .background(Tokens.canvas)

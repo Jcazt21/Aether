@@ -9,18 +9,18 @@ enum TagField: String, CaseIterable, Identifiable {
 
     var label: LocalizedStringKey {
         switch self {
-        case .title: "Título"
-        case .artist: "Artista"
+        case .title: "Title"
+        case .artist: "Artist"
         case .remixer: "Remixer"
-        case .album: "Álbum"
-        case .albumArtist: "Artista del álbum"
-        case .label: "Sello"
-        case .year: "Año"
+        case .album: "Album"
+        case .albumArtist: "Album Artist"
+        case .label: "Label"
+        case .year: "Year"
         case .isrc: "ISRC"
-        case .genre: "Género"
+        case .genre: "Genre"
         case .bpm: "BPM"
-        case .key: "Tonalidad"
-        case .comment: "Comentario"
+        case .key: "Key"
+        case .comment: "Comment"
         }
     }
 

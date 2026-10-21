@@ -24,12 +24,12 @@ struct TrackTable: View {
             .alternatingRowBackgrounds()
             .environment(\.defaultMinListRowHeight, 34)
             .contextMenu(forSelectionType: Int.self) { ids in
-                Button("Descargar \(ids.count == 1 ? "pista" : "\(ids.count) pistas")") {
+                Button("Download \(ids.count == 1 ? "Track" : "\(ids.count) Tracks")") {
                     store.requestEnqueue(tracks.filter { ids.contains($0.id) })
                 }
                 .disabled(ids.isEmpty)
                 Divider()
-                Button("Copiar enlace de Tidal") {
+                Button("Copy Tidal Link") {
                     let links = tracks.filter { ids.contains($0.id) }.map { "https://tidal.com/track/\($0.id)" }
                     NSPasteboard.general.clearContents()
                     NSPasteboard.general.setString(links.joined(separator: "\n"), forType: .string)
@@ -44,11 +44,11 @@ struct TrackTable: View {
         HStack(spacing: Tokens.Space.m) {
             Color.clear.frame(width: 22, height: 1)
             Color.clear.frame(width: 20, height: 1)
-            Text("Título").frame(maxWidth: .infinity, alignment: .leading)
-            Text("Artista").frame(width: 180, alignment: .leading)
-            Text("Álbum").frame(width: 160, alignment: .leading)
-            Text("Duración").frame(width: 64, alignment: .trailing)
-            Text("Calidad").frame(width: 78, alignment: .leading)
+            Text("Title").frame(maxWidth: .infinity, alignment: .leading)
+            Text("Artist").frame(width: 180, alignment: .leading)
+            Text("Album").frame(width: 160, alignment: .leading)
+            Text("Duration").frame(width: 64, alignment: .trailing)
+            Text("Quality").frame(width: 78, alignment: .leading)
         }
         .font(.caption.weight(.medium))
         .foregroundStyle(.secondary)
@@ -70,7 +70,7 @@ struct TrackTable: View {
             }
             .buttonStyle(.borderless)
             .frame(width: 22)
-            .accessibilityLabel("Preescuchar")
+            .accessibilityLabel("Preview")
 
             // ZStack keeps the 20 pt column even when there is no icon (a frame on EmptyView collapses).
             ZStack { matchIcon(for: track) }.frame(width: 20)
@@ -97,12 +97,12 @@ struct TrackTable: View {
         switch store.masterMatch(for: track) {
         case .exact(let item):
             Image(systemName: "checkmark.circle.fill").foregroundStyle(Tokens.signal)
-                .help("Ya en Master: \(item.relativePath)")
-                .accessibilityLabel("Ya en Master")
+                .help("Already in Master: \(item.relativePath)")
+                .accessibilityLabel("Already in Master")
         case .similar(let item):
             Image(systemName: "circle.lefthalf.filled").foregroundStyle(.secondary)
-                .help("Parecida en Master: \(item.relativePath)")
-                .accessibilityLabel("Versión parecida en Master")
+                .help("Similar in Master: \(item.relativePath)")
+                .accessibilityLabel("Similar version in Master")
         case nil:
             EmptyView()
         }

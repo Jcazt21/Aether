@@ -6,15 +6,15 @@ struct SignalPopover: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Tokens.Space.m) {
-            SectionLabel("Cadena de señal")
+            SectionLabel("Signal path")
             if let signal = player.signal, let now = player.current {
-                row("Fuente", now.formatLabel)
-                row("Salida", "\(signal.deviceName) · \(Int(signal.deviceRate)) Hz")
-                row("Ganancia", "0.0 dB (volumen en el sistema)")
-                Readout(signal.isBitPerfect ? "BIT-PERFECT" : "REMUESTREADO \(Int(signal.sourceRate)) → \(Int(signal.deviceRate)) Hz",
+                row("Source", now.formatLabel)
+                row("Output", "\(signal.deviceName) · \(Int(signal.deviceRate)) Hz")
+                row("Gain", "0.0 dB (volume set in the system)")
+                Readout(signal.isBitPerfect ? "BIT-PERFECT" : "RESAMPLED \(Int(signal.sourceRate)) → \(Int(signal.deviceRate)) Hz",
                         tone: signal.isBitPerfect ? .signal : .fault)
             }
-            SectionLabel("Nivel")
+            SectionLabel("Level")
             TimelineView(.animation(minimumInterval: 1.0 / 30, paused: player.state != .playing)) { _ in
                 LevelMeter(levels: player.engine.meter.current)
             }
@@ -51,6 +51,6 @@ struct LevelMeter: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Medidor de nivel")
+        .accessibilityLabel("Level meter")
     }
 }

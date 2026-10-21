@@ -62,14 +62,14 @@ final class JobModel: Identifiable {
 
     var readout: String {
         switch phase {
-        case .queued: "EN COLA"
-        case .resolving: "RESOLVIENDO"
+        case .queued: "QUEUED"
+        case .resolving: "RESOLVING"
         case .downloading(let segment, let total, let bytes, let rate):
             "\(bytes.formatted(.byteCount(style: .file))) · \(String(format: "%.1f", rate / 1_000_000)) MB/s · \(segment)/\(total)"
-        case .verifying(let f): "VERIFICANDO · MD5 \(Int(f * 100)) %"
-        case .verified(let result): "\(result.format.label) · VERIFICADO \(result.report.shortMD5)"
+        case .verifying(let f): "VERIFYING · MD5 \(Int(f * 100)) %"
+        case .verified(let result): "\(result.format.label) · VERIFIED \(result.report.shortMD5)"
         case .failed(let message): message
-        case .cancelled: "CANCELADO"
+        case .cancelled: "CANCELLED"
         }
     }
 

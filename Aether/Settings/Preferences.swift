@@ -43,7 +43,7 @@ final class Preferences {
         self.defaults = defaults
         let home = URL.homeDirectory
         masterFolder = defaults.string(forKey: Key.master).map { URL(filePath: $0) } ?? home.appending(path: "Master")
-        inboxFolderName = defaults.string(forKey: Key.inbox) ?? "Por clasificar"
+        inboxFolderName = defaults.string(forKey: Key.inbox) ?? "Inbox"
         hifiBaseURL = defaults.string(forKey: Key.hifi).flatMap(URL.init(string:)) ?? URL(string: "http://127.0.0.1:8000")!
         qualityPolicyRaw = defaults.string(forKey: Key.quality) ?? "hiResCapped96"
         let storedConcurrency = defaults.integer(forKey: Key.concurrency)

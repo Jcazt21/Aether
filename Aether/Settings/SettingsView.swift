@@ -24,21 +24,21 @@ private struct GeneralSettings: View {
         @Bindable var preferences = preferences
         Form {
             Section {
-                LabeledContent("Carpeta Master") {
+                LabeledContent("Master Folder") {
                     HStack {
                         Readout(preferences.masterFolder.path(percentEncoded: false), tone: .primary)
-                        Button("Elegir…") { isPickingMaster = true }
+                        Button("Choose…") { isPickingMaster = true }
                     }
                 }
-                TextField("Carpeta de entrada", text: $preferences.inboxFolderName)
+                TextField("Inbox Folder", text: $preferences.inboxFolderName)
             } header: {
-                SectionLabel("Biblioteca")
+                SectionLabel("Library")
             }
             Section {
-                TextField("URL de hifi-api", value: $preferences.hifiBaseURL, format: .url)
+                TextField("hifi-api URL", value: $preferences.hifiBaseURL, format: .url)
                     .font(.readout)
             } header: {
-                SectionLabel("Fuente")
+                SectionLabel("Source")
             }
         }
         .formStyle(.grouped)
@@ -56,44 +56,44 @@ private struct HarvesterSettings: View {
         @Bindable var preferences = preferences
         Form {
             Section {
-                Picker("Calidad", selection: $preferences.qualityPolicyRaw) {
+                Picker("Quality", selection: $preferences.qualityPolicyRaw) {
                     ForEach(QualityPolicy.allCases, id: \.rawValue) { Text($0.title).tag($0.rawValue) }
                 }
-                Stepper("Descargas simultáneas: \(preferences.maxConcurrentDownloads)",
+                Stepper("Concurrent downloads: \(preferences.maxConcurrentDownloads)",
                         value: $preferences.maxConcurrentDownloads, in: 1...4)
                 VStack(alignment: .leading, spacing: 4) {
-                    TextField("Plantilla de nombre", text: $preferences.filenameTemplate)
+                    TextField("Filename Template", text: $preferences.filenameTemplate)
                         .font(.readout)
-                    Text("Personaliza el nombre de los archivos descargados. Disponibles: {discNumber}, {trackNumber}, {artist}, {title}, {album}")
+                    Text("Customize the name of downloaded files. Available: {discNumber}, {trackNumber}, {artist}, {title}, {album}")
                         .font(.callout).foregroundStyle(.secondary)
                 }
-            } header: { SectionLabel("Descarga") }
+            } header: { SectionLabel("Download") }
             Section {
-                Toggle("Mantener rekordbox.xml", isOn: $preferences.rekordboxXMLEnabled)
-                LabeledContent("Archivo") {
+                Toggle("Keep rekordbox.xml up to date", isOn: $preferences.rekordboxXMLEnabled)
+                LabeledContent("File") {
                     HStack {
                         Readout(preferences.rekordboxXMLURL.path(percentEncoded: false))
-                        Button("Mostrar") { NSWorkspace.shared.activateFileViewerSelecting([preferences.rekordboxXMLURL]) }
+                        Button("Show") { NSWorkspace.shared.activateFileViewerSelecting([preferences.rekordboxXMLURL]) }
                     }
                 }
-                Text("En rekordbox: Preferencias › Avanzado › Base de datos › rekordbox xml → elige este archivo.")
+                Text("In rekordbox: Preferences › Advanced › Database › rekordbox xml → choose this file.")
                     .font(.callout).foregroundStyle(.secondary)
             } header: { SectionLabel("rekordbox") }
             Section {
                 LabeledContent("hifi-api") {
                     HStack {
                         Readout(preferences.hifiBaseURL.absoluteString)
-                        Button("Probar") {
+                        Button("Test") {
                             Task { connection = await HiFiClient(baseURL: preferences.hifiBaseURL).ping() }
                         }
                         if let connection {
                             Image(systemName: connection ? "checkmark.circle.fill" : "xmark.octagon.fill")
                                 .foregroundStyle(connection ? Tokens.signal : Tokens.fault)
-                                .accessibilityLabel(connection ? "Conectado" : "Sin conexión")
+                                .accessibilityLabel(connection ? "Connected" : "Offline")
                         }
                     }
                 }
-            } header: { SectionLabel("Conexión") }
+            } header: { SectionLabel("Connection") }
         }
         .formStyle(.grouped)
     }
@@ -106,10 +106,10 @@ private struct CoreSettings: View {
         @Bindable var preferences = preferences
         Form {
             Section {
-                Toggle("Bit-perfect: ajustar el sample rate del DAC a cada pista", isOn: $preferences.bitPerfect)
-                Text("Aether devuelve el sample rate original al salir. El volumen se controla en el sistema o en el DAC.")
+                Toggle("Bit-perfect: match the DAC sample rate to each track", isOn: $preferences.bitPerfect)
+                Text("Aether restores the original sample rate on quit. Volume is controlled by the system or the DAC.")
                     .font(.callout).foregroundStyle(.secondary)
-            } header: { SectionLabel("Salida") }
+            } header: { SectionLabel("Output") }
         }
         .formStyle(.grouped)
     }

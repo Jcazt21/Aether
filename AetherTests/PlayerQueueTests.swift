@@ -20,6 +20,6 @@ import Testing
         let s = SignalPath(sourceRate: 96_000, bitDepth: 24, deviceRate: 96_000, deviceName: "RME ADI-2", isBitPerfect: true)
         #expect(s.summary == "24/96 → RME ADI-2 · 96 kHz · BIT-PERFECT")
         let r = SignalPath(sourceRate: 44_100, bitDepth: 16, deviceRate: 48_000, deviceName: "MacBook Pro", isBitPerfect: false)
-        #expect(r.summary == "16/44.1 → MacBook Pro · 48 kHz · REMUESTREADO")
+        #expect(r.summary == "16/44.1 → MacBook Pro · 48 kHz · RESAMPLED")
     }
 }

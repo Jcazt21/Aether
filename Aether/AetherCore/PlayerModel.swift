@@ -31,7 +31,7 @@ struct SignalPath: Equatable {
 
     var summary: String {
         let source = bitDepth.map { "\($0)/\(Self.khz(sourceRate))" } ?? "\(Self.khz(sourceRate)) kHz"
-        return "\(source) → \(deviceName) · \(Self.khz(deviceRate)) kHz · \(isBitPerfect ? "BIT-PERFECT" : "REMUESTREADO")"
+        return "\(source) → \(deviceName) · \(Self.khz(deviceRate)) kHz · \(isBitPerfect ? "BIT-PERFECT" : "RESAMPLED")"
     }
 }
 

@@ -30,17 +30,17 @@ struct JobRow: View {
     @ViewBuilder private var menu: some View {
         switch job.phase {
         case .verified(let result):
-            Button("Mostrar en Finder") { NSWorkspace.shared.activateFileViewerSelecting([result.fileURL]) }
-            Button("Copiar MD5") {
+            Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([result.fileURL]) }
+            Button("Copy MD5") {
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(result.report.md5Actual ?? "", forType: .string)
             }
         case .failed:
-            Button("Reintentar") { store.retryFailed() }
+            Button("Retry") { store.retryFailed() }
         case .cancelled:
             EmptyView()
         default:
-            Button("Cancelar") { store.cancel(job.id) }
+            Button("Cancel") { store.cancel(job.id) }
         }
     }
 }

@@ -38,12 +38,12 @@ struct StatusGlyph: View {
 
     private var label: Text {
         switch status {
-        case .queued: Text("En cola")
-        case .working: Text("Descargando")
-        case .verifying: Text("Verificando")
-        case .verified: Text("Verificado")
-        case .failed: Text("Falló")
-        case .cancelled: Text("Cancelado")
+        case .queued: Text("Queued")
+        case .working: Text("Downloading")
+        case .verifying: Text("Verifying")
+        case .verified: Text("Verified")
+        case .failed: Text("Failed")
+        case .cancelled: Text("Cancelled")
         }
     }
 }

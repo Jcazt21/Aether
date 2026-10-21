@@ -17,7 +17,7 @@ struct PlaylistImport: Equatable {
 
 enum SearchScope: String, CaseIterable {
     case tracks, albums
-    var title: String { self == .tracks ? "Pistas" : "Álbumes" }
+    var title: String { self == .tracks ? "Tracks" : "Albums" }
 }
 
 @MainActor
@@ -172,10 +172,10 @@ final class HarvesterStore {
             playlistImport = nil
         } catch SpotifyError.unreadable {
             playlistImport = nil
-            searchError = "No pude leer esa playlist. Debe ser pública."
+            searchError = "Couldn't read that playlist. It must be public."
         } catch {
             playlistImport = nil
-            searchError = "No pude conectar con Spotify."
+            searchError = "Couldn't connect to Spotify."
         }
     }
 
@@ -315,10 +315,10 @@ final class HarvesterStore {
         defer { batchVerified = 0; batchFailed = 0 }
         guard !NSApp.isActive, batchVerified + batchFailed > 0 else { return }
         let content = UNMutableNotificationContent()
-        content.title = "Hermes terminó"
+        content.title = "Hermes finished"
         content.body = batchFailed == 0
-            ? "\(batchVerified) pistas verificadas"
-            : "\(batchVerified) verificadas · \(batchFailed) fallidas"
+            ? "\(batchVerified) tracks verified"
+            : "\(batchVerified) verified · \(batchFailed) failed"
         UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil))
     }
 }

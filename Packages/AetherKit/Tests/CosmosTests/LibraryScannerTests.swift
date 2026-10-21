@@ -9,7 +9,7 @@ import TestSupport
     private func makeMaster() throws -> URL {
         let root = FileManager.default.temporaryDirectory.appending(path: "Master-\(UUID().uuidString)")
         let fm = FileManager.default
-        for folder in ["UK House", "Tech House", "Por clasificar", "Vacía"] {
+        for folder in ["UK House", "Tech House", "Inbox", "Vacía"] {
             try fm.createDirectory(at: root.appending(path: folder), withIntermediateDirectories: true)
         }
         let (a, _) = try AudioFixture.makeFLAC(seconds: 0.5)
@@ -25,7 +25,7 @@ import TestSupport
         let root = try makeMaster()
         let result = await LibraryScanner.scan(root: root, previous: [:])
         #expect(Set(result.items.map(\.relativePath)) == ["UK House/Prospa - Dreams.flac", "Tech House/PAWSA - The Groovy Cat.flac", "b2bsept.wav"])
-        #expect(result.folders == ["Por clasificar", "Tech House", "UK House", "Vacía"])
+        #expect(result.folders == ["Inbox", "Tech House", "UK House", "Vacía"])
         #expect(result.read == 3)
         #expect(result.reused == 0)
     }

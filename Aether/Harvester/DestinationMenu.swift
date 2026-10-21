@@ -7,7 +7,7 @@ struct DestinationMenu: View {
     var body: some View {
         @Bindable var store = store
         Menu {
-            Picker("Destino", selection: $store.destination) {
+            Picker("Destination", selection: $store.destination) {
                 ForEach(store.destinationFolders, id: \.self) { folder in
                     Text(folder.lastPathComponent).tag(folder)
                 }
@@ -16,7 +16,7 @@ struct DestinationMenu: View {
         } label: {
             Label(store.destination.lastPathComponent, systemImage: "folder")
         }
-        .help("Carpeta de destino en Master")
+        .help("Destination folder in Master")
         .onAppear { store.refreshDestinationFolders() }
     }
 }

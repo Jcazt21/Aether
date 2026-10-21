@@ -11,6 +11,6 @@ struct QualityBadge: View {
             .padding(.horizontal, 5)
             .padding(.vertical, 1)
             .overlay(Capsule().strokeBorder(Tokens.hairline))
-            .accessibilityLabel(hiRes ? "Alta resolución" : "Sin pérdida")
+            .accessibilityLabel(hiRes ? "High resolution" : "Lossless")
     }
 }

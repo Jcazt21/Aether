@@ -27,11 +27,11 @@ import TagKit
     @Test func duplicateGroupsUseTagsOrFileNames() {
         let items = [
             item("UK House/Prospa - Dreams.flac", artist: "Prospa", title: "Dreams"),
-            item("Por clasificar/Prospa - Dreams.mp3", codec: .mp3),
+            item("Inbox/Prospa - Dreams.mp3", codec: .mp3),
             item("UK House/Prospa - Baby.flac", artist: "Prospa", title: "Baby"),
         ]
         let groups = DuplicateDetector.groups(in: items)
-        #expect(groups == [DuplicateGroup(id: "prospa|dreams", itemIDs: ["Por clasificar/Prospa - Dreams.mp3", "UK House/Prospa - Dreams.flac"])])
+        #expect(groups == [DuplicateGroup(id: "prospa|dreams", itemIDs: ["Inbox/Prospa - Dreams.mp3", "UK House/Prospa - Dreams.flac"])])
     }
 
     @Test func lookupPrefersISRCThenStrictThenLoose() {

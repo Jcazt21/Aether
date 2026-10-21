@@ -12,15 +12,15 @@ struct HarvesterSearchView: View {
                 .navigationDestination(for: TidalAlbum.self) { AlbumTracksView(album: $0) }
         }
         .confirmationDialog(
-            "\(store.pendingDuplicates?.count ?? 0) ya están en Master",
+            "\(store.pendingDuplicates?.count ?? 0) already in Master",
             isPresented: Binding(get: { store.pendingDuplicates != nil }, set: { if !$0 { store.resolvePendingDuplicates(includeDuplicates: false) } }),
             titleVisibility: .visible
         ) {
-            Button("Omitirlas") { store.resolvePendingDuplicates(includeDuplicates: false) }
+            Button("Skip Them") { store.resolvePendingDuplicates(includeDuplicates: false) }
                 .keyboardShortcut(.defaultAction)
-            Button("Descargar de todos modos") { store.resolvePendingDuplicates(includeDuplicates: true) }
+            Button("Download Anyway") { store.resolvePendingDuplicates(includeDuplicates: true) }
         } message: {
-            Text("Coinciden por ISRC o por artista y título.")
+            Text("Matched by ISRC or by artist and title.")
         }
         .onAppear { searchFocused = true }
         .task(id: "\(store.searchScope.rawValue)|\(store.searchQuery)") {
@@ -36,14 +36,14 @@ struct HarvesterSearchView: View {
             ToolbarItem(placement: .automatic) {
                 HStack(spacing: Tokens.Space.xs) {
                     Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
-                    TextField("Buscar en Tidal", text: $store.searchQuery)
+                    TextField("Search Tidal", text: $store.searchQuery)
                         .textFieldStyle(.plain)
                         .focused($searchFocused)
                         .frame(width: 200)
                     if !store.searchQuery.isEmpty {
                         Button { store.searchQuery = "" } label: { Image(systemName: "xmark.circle.fill") }
                             .buttonStyle(.plain).foregroundStyle(.secondary)
-                            .accessibilityLabel("Borrar búsqueda")
+                            .accessibilityLabel("Clear Search")
                     }
                 }
                 .padding(.horizontal, Tokens.Space.m)
@@ -55,10 +55,10 @@ struct HarvesterSearchView: View {
                 Button {
                     store.enqueueSelection()
                 } label: {
-                    Label("Descargar", systemImage: "arrow.down.circle")
+                    Label("Download", systemImage: "arrow.down.circle")
                 }
                 .disabled(store.selectedTrackIDs.isEmpty || store.searchScope != .tracks)
-                .help("Descargar selección (⌘D)")
+                .help("Download Selection (⌘D)")
             }
         }
     }
@@ -66,11 +66,11 @@ struct HarvesterSearchView: View {
     @ViewBuilder private var content: some View {
         @Bindable var store = store
         if let error = store.searchError {
-            ContentUnavailableView("No se pudo buscar", systemImage: "bolt.horizontal.circle",
+            ContentUnavailableView("Search Failed", systemImage: "bolt.horizontal.circle",
                                    description: Text(error))
         } else if store.searchQuery.count < 2 {
-            ContentUnavailableView("Buscar en Tidal", systemImage: "magnifyingglass",
-                                   description: Text("Escribe un artista, una pista o un álbum, o pega el link de una playlist de Spotify."))
+            ContentUnavailableView("Search Tidal", systemImage: "magnifyingglass",
+                                   description: Text("Type an artist, a track or an album, or paste a Spotify playlist link."))
         } else {
             switch store.searchScope {
             case .tracks:
@@ -98,13 +98,13 @@ private struct PlaylistBanner: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text(playlist.name).lineLimit(1)
                 Text(playlist.isDone
-                     ? "\(playlist.matched) de \(playlist.total) encontradas en Tidal"
-                     : "Buscando en Tidal… \(playlist.processed) de \(playlist.total)")
+                     ? "\(playlist.matched) of \(playlist.total) found on Tidal"
+                     : "Searching Tidal… \(playlist.processed) of \(playlist.total)")
                     .font(.callout).foregroundStyle(.secondary)
             }
             Spacer()
             if !playlist.unmatched.isEmpty {
-                Text("\(playlist.unmatched.count) sin encontrar")
+                Text("\(playlist.unmatched.count) not found")
                     .font(.callout).foregroundStyle(.secondary)
                     .help(playlist.unmatched.joined(separator: "\n"))
             }
@@ -125,7 +125,7 @@ private struct AlbumRow: View {
                 Text(album.primaryArtistName).font(.callout).foregroundStyle(.secondary).lineLimit(1)
             }
             Spacer()
-            Readout([album.year, album.numberOfTracks.map { "\($0) pistas" }].compactMap { $0 }.joined(separator: " · "))
+            Readout([album.year, album.numberOfTracks.map { "\($0) tracks" }].compactMap { $0 }.joined(separator: " · "))
             QualityBadge(hiRes: album.supportsHiRes)
         }
         .padding(.vertical, 2)
@@ -165,6 +165,6 @@ private struct ScopeSwitcher: View {
         .glassEffect(.regular, in: .capsule)
         .animation(reduceMotion ? nil : .easeOut(duration: 0.18), value: selection)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("Ámbito")
+        .accessibilityLabel("Scope")
     }
 }

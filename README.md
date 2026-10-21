@@ -1,30 +1,30 @@
 # Aether
 
-App nativa de macOS para descargar, organizar y reproducir música sin pérdida (FLAC), pensada para DJs.
+A native macOS app for downloading, organizing and playing lossless music (FLAC), built for DJs.
 
-Aether se compone de tres módulos:
+Aether is made of three modules:
 
-| Módulo | Qué hace |
+| Module | What it does |
 |---|---|
-| **Harvester** | Busca pistas y álbumes, los descarga (DASH → FLAC nativo, sin ffmpeg), verifica la integridad bit a bit (MD5 contra `STREAMINFO`), escribe los tags y mantiene cola e historial. Acepta enlaces de playlists de Spotify y puede exportar un XML para rekordbox. |
-| **Cosmos** | Explorador de tu biblioteca local: escanea carpetas, edita tags, detecta pistas sin etiquetas, duplicados y archivos lossy, y organiza archivos. |
-| **Lyra** | Reproductor con salida bit-perfect, cambio de frecuencia de muestreo del dispositivo y vista de la cadena de señal. |
+| **Harvester** | Searches tracks and albums, downloads them (native DASH → FLAC, no ffmpeg), verifies integrity bit for bit (MD5 against `STREAMINFO`), writes tags and keeps a queue and history. Accepts Spotify playlist links and can export an XML for rekordbox. |
+| **Cosmos** | Browser for your local library: scans folders, edits tags, detects untagged tracks, duplicates and lossy files, and organizes files. |
+| **Lyra** | Player with bit-perfect output, device sample-rate switching and a signal-path view. |
 
-Documentación técnica del proyecto en [`docs/`](docs): [rendimiento](docs/performance.md), [accesibilidad](docs/accessibility.md), [spikes técnicos](docs/spikes.md), [release](docs/release.md).
+Technical documentation lives in [`docs/`](docs): [performance](docs/performance.md), [accessibility](docs/accessibility.md), [technical spikes](docs/spikes.md), [release](docs/release.md).
 
 ---
 
-## Requisitos
+## Requirements
 
-| Requisito | Versión |
+| Requirement | Version |
 |---|---|
-| macOS | **27.0** o superior (`MACOSX_DEPLOYMENT_TARGET = 27.0`) |
-| Xcode | Una versión con Swift 6.2 y el SDK de macOS 27 (el paquete usa `swift-tools-version: 6.2`) |
-| Servidor **hifi-api** | Una instancia accesible por HTTP (ver más abajo) |
+| macOS | **27.0** or later (`MACOSX_DEPLOYMENT_TARGET = 27.0`) |
+| Xcode | A version with Swift 6.2 and the macOS 27 SDK (the package uses `swift-tools-version: 6.2`) |
+| **hifi-api** server | An instance reachable over HTTP (see below) |
 
-Aether **no tiene dependencias externas**: no hay paquetes de terceros en SwiftPM ni CocoaPods. Todo el código está en el proyecto y en el paquete local [`Packages/AetherKit`](Packages/AetherKit).
+Aether has **no external dependencies**: no third-party SwiftPM packages and no CocoaPods. All code lives in the project and in the local package [`Packages/AetherKit`](Packages/AetherKit).
 
-## Instalación
+## Installation
 
 ```bash
 git clone https://github.com/Jcazt21/Aether.git Aether
@@ -32,100 +32,100 @@ cd Aether
 open Aether.xcodeproj
 ```
 
-1. En Xcode, selecciona el esquema **Aether** y el destino **My Mac**.
-2. En *Signing & Capabilities* elige tu propio **Team** (el proyecto usa firma automática).
-3. Compila y ejecuta con `⌘R`.
+1. In Xcode, select the **Aether** scheme and the **My Mac** destination.
+2. Under *Signing & Capabilities*, choose your own **Team** (the project uses automatic signing).
+3. Build and run with `⌘R`.
 
-Desde la terminal:
+From the terminal:
 
 ```bash
 xcodebuild -project Aether.xcodeproj -scheme Aether -configuration Release -destination 'platform=macOS' build
 ```
 
-> La app no usa App Sandbox (`ENABLE_APP_SANDBOX = NO`). El `Info.plist` solo permite conexiones de red local (`NSAllowsLocalNetworking`), pensado para un hifi-api en `127.0.0.1` o en tu LAN. Si tu servidor está en otro host o usa HTTPS, revisa `Config/Aether-Info.plist`.
+> The app does not use App Sandbox (`ENABLE_APP_SANDBOX = NO`). `Info.plist` only allows local-network connections (`NSAllowsLocalNetworking`), intended for a hifi-api on `127.0.0.1` or on your LAN. If your server is on another host or uses HTTPS, review `Config/Aether-Info.plist`.
 
-## Configurar hifi-api
+## Setting up hifi-api
 
-Aether **no incluye** ningún servidor ni credenciales. Para buscar y descargar necesita un servicio **hifi-api** propio que haga de intermediario con el catálogo. La app solo guarda la **URL base** de ese servicio.
+Aether **does not ship** any server or credentials. To search and download, it needs your own **hifi-api** service acting as an intermediary to the catalog. The app only stores that service's **base URL**.
 
-1. Despliega o ejecuta tu instancia de hifi-api (sigue las instrucciones de la implementación que uses). Por defecto Aether espera encontrarla en `http://127.0.0.1:8000`.
-2. Abre **Ajustes** en Aether e introduce la URL en el campo **URL de hifi-api**.
-3. Pulsa el botón de comprobación: Aether hace un `GET` a la URL base y espera un `200 OK`.
+1. Deploy or run your own hifi-api instance (follow the instructions of the implementation you use). By default Aether expects it at `http://127.0.0.1:8000`.
+2. Open **Settings** in Aether and enter the URL in the **hifi-api URL** field.
+3. Press the check button: Aether sends a `GET` to the base URL and expects `200 OK`.
 
-La URL se guarda en `UserDefaults` en tu Mac; no se escribe en el repositorio.
+The URL is stored in `UserDefaults` on your Mac; it is never written to the repository.
 
-### Contrato que Aether espera del servidor
+### Contract Aether expects from the server
 
-Esto es lo que el cliente (`Packages/AetherKit/Sources/HiFiClient`) llama. Si tu instancia no responde así, Aether no funcionará.
+This is what the client (`Packages/AetherKit/Sources/HiFiClient`) calls. If your instance does not respond this way, Aether will not work.
 
-| Petición | Uso | Respuesta esperada |
+| Request | Purpose | Expected response |
 |---|---|---|
-| `GET /` | Comprobar conexión | HTTP `200` |
-| `GET /search/?s=<texto>&limit=&offset=` | Buscar pistas | `{"data": { página de pistas }}` |
-| `GET /search/?al=<texto>&limit=` | Buscar álbumes | `{"data": {"albums": { página de álbumes }}}` |
-| `GET /album/?id=<id>&limit=500` | Detalle de álbum con sus pistas | `{"data": { álbum + "items": [...] }}` |
-| `GET /track/?id=<id>&quality=<calidad>` | Información de reproducción | `{"data": { "manifest": <base64>, "manifestMimeType", "audioQuality", "bitDepth", "sampleRate", ... }}` |
+| `GET /` | Connection check | HTTP `200` |
+| `GET /search/?s=<text>&limit=&offset=` | Search tracks | `{"data": { page of tracks }}` |
+| `GET /search/?al=<text>&limit=` | Search albums | `{"data": {"albums": { page of albums }}}` |
+| `GET /album/?id=<id>&limit=500` | Album detail with its tracks | `{"data": { album + "items": [...] }}` |
+| `GET /track/?id=<id>&quality=<quality>` | Playback info | `{"data": { "manifest": <base64>, "manifestMimeType", "audioQuality", "bitDepth", "sampleRate", ... }}` |
 
-- `quality` es `HI_RES_LOSSLESS` o `LOSSLESS`.
-- `manifest` debe ser un manifiesto **DASH** (MPD) con `SegmentTemplate`; Aether descarga los segmentos y reconstruye el FLAC.
-- Las carátulas se piden aparte a `https://resources.tidal.com/images/…` (configurable en `HiFiClient.init`, parámetro `imageBaseURL`).
-- Todas las respuestas deben ser HTTP `200`; cualquier otro código se trata como error.
+- `quality` is `HI_RES_LOSSLESS` or `LOSSLESS`.
+- `manifest` must be a **DASH** manifest (MPD) with a `SegmentTemplate`; Aether downloads the segments and rebuilds the FLAC.
+- Cover art is requested separately from `https://resources.tidal.com/images/…` (configurable via the `imageBaseURL` parameter of `HiFiClient.init`).
+- Every response must be HTTP `200`; any other status is treated as an error.
 
-### Seguridad y uso responsable
+### Security and responsible use
 
-- **No subas a git** URLs privadas, tokens ni credenciales de tu servidor. El `.gitignore` ya excluye `.env`, claves, certificados, música descargada y datos locales.
-- Tu servidor hifi-api puede requerir su propia autenticación o configuración; documéntala fuera de este repositorio.
-- Descarga solo contenido que tengas derecho a obtener y respeta los términos de servicio del catálogo que uses. Esta aplicación no concede ningún derecho sobre el contenido.
+- **Never commit** private URLs, tokens or credentials of your server. `.gitignore` already excludes `.env` files, keys, certificates, downloaded music and local data.
+- Your hifi-api server may require its own authentication or configuration; document it outside this repository.
+- Only download content you have the right to obtain, and respect the terms of service of the catalog you use. This application grants no rights over any content.
 
-## Primer uso
+## First run
 
-1. **Ajustes → carpeta máster:** elige dónde vive tu biblioteca. Harvester descarga a una subcarpeta de destino y Cosmos escanea esta carpeta.
-2. **Harvester → Buscar:** busca por pista o álbum, o pega un enlace de playlist de Spotify para importarla; selecciona y encola.
-3. **Cola e historial:** sigue el progreso de cada descarga, reintenta las fallidas y limpia las terminadas.
-4. **Cosmos:** revisa pistas **sin tags**, **duplicados** y **lossy**, y edita los tags en bloque.
-5. **Lyra:** reproduce desde Cosmos; activa bit-perfect en Ajustes si quieres que el dispositivo siga la frecuencia de la pista.
+1. **Settings → Master Folder:** choose where your library lives. Harvester downloads into a destination subfolder and Cosmos scans this folder.
+2. **Harvester → Search:** search by track or album, or paste a Spotify playlist link to import it; select and enqueue.
+3. **Queue and history:** follow each download's progress, retry failed ones and clear finished ones.
+4. **Cosmos:** review tracks that are **untagged** , **duplicates**  and **lossy**, and edit tags in bulk.
+5. **Lyra:** play from Cosmos; enable bit-perfect in Settings if you want the output device to follow the track's sample rate.
 
-La cola de descargas y el historial se guardan en el directorio de datos de la app y se restauran al abrirla.
+The download queue and history are saved in the app's data directory and restored when the app opens.
 
-## Desarrollo
+## Development
 
-Estructura:
+Layout:
 
 ```
-Aether/                 App SwiftUI (shell, Harvester, Cosmos, reproductor, ajustes, sistema de diseño)
-AetherTests/            Tests unitarios de la app (Swift Testing)
-AetherUITests/          Tests de interfaz y auditoría de accesibilidad
-Packages/AetherKit/     Paquete local con la lógica sin UI:
-  ByteKit               Lectura/escritura binaria
-  TagKit                Tags FLAC, ID3, WAV; nombres de archivo
-  FlacKit               DASH/fMP4 → FLAC, verificación de integridad
-  HiFiClient            Cliente HTTP de hifi-api y modelos
-  Harvester             Motor de descargas, cola, historial, XML de rekordbox
-  Cosmos                Escáner de biblioteca, índice, organizador
-  AetherCore            Motor de reproducción, medidores, dispositivos de salida
-Config/                 Info.plist y opciones de exportación
-Spikes/                 Experimentos técnicos (la salida en Spikes/out/ no se versiona)
-docs/                   Auditorías y revisiones
+Aether/                 SwiftUI app (shell, Harvester, Cosmos, player, settings, design system)
+AetherTests/            App unit tests (Swift Testing)
+AetherUITests/          UI tests and accessibility audit
+Packages/AetherKit/     Local package with the non-UI logic:
+  ByteKit               Binary reading/writing
+  TagKit                FLAC, ID3 and WAV tags; file naming
+  FlacKit               DASH/fMP4 → FLAC, integrity verification
+  HiFiClient            hifi-api HTTP client and models
+  Harvester             Download engine, queue, history, rekordbox XML
+  Cosmos                Library scanner, index, organizer
+  AetherCore            Playback engine, meters, output devices
+Config/                 Info.plist and export options
+Spikes/                 Technical experiments (output in Spikes/out/ is not versioned)
+docs/                   Audits and reviews
 ```
 
-La app compila con `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` y concurrencia accesible; el código de `AetherKit` usa `ExistentialAny` e `InternalImportsByDefault`.
+The app builds with `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` and approachable concurrency; `AetherKit` uses `ExistentialAny` and `InternalImportsByDefault`.
 
 ### Tests
 
 ```bash
-# Paquete AetherKit
+# AetherKit package
 swift test --package-path Packages/AetherKit
 
-# Tests unitarios de la app
+# App unit tests
 xcodebuild -project Aether.xcodeproj -scheme Aether -destination 'platform=macOS' -only-testing:AetherTests test -quiet
 ```
 
-Los tests de interfaz (`AetherUITests`) se ejecutan desde Xcode con el esquema **Aether**.
+UI tests (`AetherUITests`) are run from Xcode with the **Aether** scheme.
 
-### Distribución
+### Distribution
 
-`Config/ExportOptions.plist` está preparado para exportar con **Developer ID** (`method = developer-id`). Para distribuir fuera de tu Mac necesitas tu propia cuenta de desarrollador, firmar y notarizar con `notarytool`.
+`Config/ExportOptions.plist` is set up for **Developer ID** export (`method = developer-id`). To distribute outside your own Mac you need your own developer account, and you must sign and notarize with `notarytool`.
 
-## Licencia
+## License
 
-Sin licencia definida. Añade un archivo `LICENSE` antes de publicar el repositorio.
+No license defined. Add a `LICENSE` file before making the repository public.

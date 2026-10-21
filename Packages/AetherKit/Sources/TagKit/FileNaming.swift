@@ -31,7 +31,7 @@ public enum FileNaming {
         case let (a?, nil): return a
         case (nil, nil):
             let f = sanitize(fallback)
-            return f.isEmpty ? "Sin título" : f
+            return f.isEmpty ? "Untitled" : f
         }
     }
 

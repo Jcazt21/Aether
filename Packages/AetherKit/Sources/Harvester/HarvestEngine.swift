@@ -99,9 +99,9 @@ public actor HarvestEngine {
 
     public static func message(for error: any Error) -> String {
         switch error {
-        case HarvestError.integrity(let reason): "Integridad: \(reason)"
+        case HarvestError.integrity(let reason): "Integrity: \(reason)"
         case HarvestError.http(let code): "HTTP \(code)"
-        case let error as URLError where error.code == .notConnectedToInternet: "Sin conexión"
+        case let error as URLError where error.code == .notConnectedToInternet: "Offline"
         case let error as URLError where error.code == .cannotConnectToHost: "hifi-api no responde"
         default: String(describing: error)
         }
