@@ -25,7 +25,7 @@ struct HarvesterQueueView: View {
                 Button { store.retryFailed() } label: { Label("Reintentar fallidas", systemImage: "arrow.clockwise") }
                     .disabled(store.failedCount == 0)
                 Button { store.clearFinished() } label: { Label("Limpiar terminadas", systemImage: "checkmark.circle.badge.xmark") }
-                    .disabled(!store.jobs.contains { $0.phase.isTerminal })
+                    .disabled(!store.hasFinishedJobs)
             }
         }
         .onKeyPress(.delete) {

@@ -28,8 +28,22 @@ final class HarvesterStore {
     var masterLookup: MasterLookup = .empty
     var pendingDuplicates: [TidalTrack]?
 
-    var activeCount: Int { jobs.count { !$0.phase.isTerminal } }
-    var failedCount: Int { jobs.count { if case .failed = $0.phase { true } else { false } } }
+    private(set) var activeCount = 0
+    private(set) var failedCount = 0
+    private(set) var hasFinishedJobs = false
+
+    private func refreshJobCounts() {
+        var active = 0, failed = 0, finished = false
+        for job in jobs {
+            if job.phase.isTerminal {
+                finished = true
+                if case .failed = job.phase { failed += 1 }
+            } else { active += 1 }
+        }
+        if activeCount != active { activeCount = active }
+        if failedCount != failed { failedCount = failed }
+        if hasFinishedJobs != finished { hasFinishedJobs = finished }
+    }
     var currentClient: HiFiClient { client }
 
     @ObservationIgnored private let preferences: Preferences
@@ -152,12 +166,14 @@ final class HarvesterStore {
         let failed = jobs.filter { if case .failed = $0.phase { true } else { false } }
         jobs.removeAll { job in failed.contains { $0.id == job.id } }
         failed.forEach { jobsByID[$0.id] = nil }
+        refreshJobCounts()
         enqueue(failed.map(\.request.track))
     }
 
     func clearFinished() {
         jobs.removeAll { $0.phase.isTerminal }
         jobsByID = Dictionary(uniqueKeysWithValues: jobs.map { ($0.id, $0) })
+        refreshJobCounts()
     }
 
     func refreshDestinationFolders() {
@@ -171,17 +187,20 @@ final class HarvesterStore {
 
     // MARK: Events
 
-    private func register(_ requests: [HarvestRequest]) {
+    func register(_ requests: [HarvestRequest]) {
         for request in requests where jobsByID[request.id] == nil {
             let job = JobModel(request: request)
             jobsByID[request.id] = job
             jobs.append(job)
         }
+        refreshJobCounts()
     }
 
-    private func handle(_ event: HarvestEvent) async {
+    func handle(_ event: HarvestEvent) async {
         guard let job = jobsByID[event.id] else { return }
+        let wasTerminal = job.phase.isTerminal
         job.phase = event.phase
+        if wasTerminal != event.phase.isTerminal || event.phase == .queued { refreshJobCounts() }
         if case .verified(let result) = event.phase {
             batchVerified += 1
             let entry = HistoryEntry(request: job.request, result: result)

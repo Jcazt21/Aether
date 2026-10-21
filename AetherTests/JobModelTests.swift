@@ -1,7 +1,9 @@
 import FlacKit
 import Foundation
-import Harvester
+@testable import Harvester
 import HiFiClient
+import Observation
+import os
 import Testing
 @testable import Aether
 
@@ -42,5 +44,30 @@ import Testing
         job.phase = .failed("Integridad: MD5 no coincide con la fuente")
         #expect(job.stage == .failed)
         #expect(job.readoutTone == .fault)
+    }
+
+    @Test func progressTicksDoNotInvalidateSummaryCounts() async throws {
+        let defaults = UserDefaults(suiteName: "test.\(UUID().uuidString)")!
+        let store = HarvesterStore(preferences: Preferences(defaults: defaults))
+        let request = try job().request
+        store.register([request])
+        let model = try #require(store.jobs.first)
+        #expect(store.activeCount == 1)
+        #expect(store.failedCount == 0)
+        #expect(!store.hasFinishedJobs)
+
+        let invalidated = OSAllocatedUnfairLock(initialState: false)
+        withObservationTracking {
+            _ = store.activeCount; _ = store.failedCount; _ = store.hasFinishedJobs
+        } onChange: { invalidated.withLock { $0 = true } }
+
+        await store.handle(HarvestEvent(id: request.id, phase: .downloading(segment: 5, of: 20, bytes: 512_000, bytesPerSecond: 1_000_000)))
+        #expect(!invalidated.withLock { $0 })
+        #expect(model.phase != .queued)
+
+        await store.handle(HarvestEvent(id: request.id, phase: .failed("boom")))
+        #expect(store.activeCount == 0)
+        #expect(store.failedCount == 1)
+        #expect(store.hasFinishedJobs)
     }
 }
